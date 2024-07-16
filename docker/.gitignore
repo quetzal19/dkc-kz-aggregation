@@ -1,0 +1,5 @@
+local/mongo/data/db/
+local/mongo/data/log/
+local/nginx/logs/
+local/rabbitmq/log/
+local/rabbitmq/data/
