@@ -3,7 +3,7 @@
 ## Версии ПО
 1. PHP 8.3
 2. [MongoDB 4.4](https://www.mongodb.com/docs/v4.4/) (используется эта версия, потому что в ней остался sh, начиная с 5-й версии нужен отдельный клиент)
-3. Symfony 7.0.*
+3. Symfony 7.0.* + [ODM](https://www.doctrine-project.org/projects/doctrine-mongodb-bundle/en/current/index.html)
 
 # Как развернуть проект локально:
 
@@ -29,3 +29,7 @@ make bash-php
 ```
 
 При первом запуске нужно выполнить `composer install`.
+
+## Локальная копия
+- http://localhost/ - Symfony
+- http://localhost:15672/ - RabbitMQ

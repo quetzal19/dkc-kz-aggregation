@@ -21,6 +21,9 @@ info: ## Шпаргалка по установки из README.md
 ##################
 # Docker compose
 ##################
+ps:
+	docker ps | grep --color dkc-kz-agg
+
 rebuild: ## Сборка контейнеров без запуска проекта
 	docker compose -f docker/docker-compose.$(ENV).yml build --no-cache
 
@@ -35,3 +38,6 @@ bash-php: ## Зайти в bash контейнера с php
 
 bash-mongo: ## Зайти в bash контейнера с mongodb
 	docker compose -f docker/docker-compose.$(ENV).yml exec mongodb sh
+
+bash-rabbit: ## Зайти в bash контейнера с mongodb
+	docker compose -f docker/docker-compose.$(ENV).yml exec rabbit sh

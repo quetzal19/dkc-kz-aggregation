@@ -15,6 +15,6 @@ RUN groupmod -o -g ${GID} www-data && usermod -o -u ${UID} -g www-data www-data
 
 USER www-data
 
-WORKDIR /var/www
+WORKDIR /var/www/backend
 
 CMD COMPOSER_MEMORY_LIMIT=-1 composer install ; php-fpm
