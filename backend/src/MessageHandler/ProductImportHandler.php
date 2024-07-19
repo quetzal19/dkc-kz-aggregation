@@ -11,8 +11,8 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 class ProductImportHandler
 {
     public function __construct(
-        protected SerializerInterface $serializer,
-        protected ValidatorInterface $validator,
+//        protected SerializerInterface $serializer,
+//        protected ValidatorInterface $validator,
         protected LoggerInterface $productImportLogger
     ) {
     }
