@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Dto\Api\Request\AddProductsDto;
 use App\Dto\Api\Response\TestResponse;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
@@ -17,7 +16,7 @@ class ProductsController extends AbstractController
     #[Route('/products', name: 'products', methods: ['POST'])]
     #[OA\RequestBody(
         required: true,
-        content: new Model(type: AddProductsDto::class)
+//        content: new Model(type: AddProductsDto::class)
     )]
     #[OA\Response(
         response: 200,
