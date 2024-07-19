@@ -24,7 +24,18 @@ class TestProductImportCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->bus->dispatch((new ProductImport())->setMessage('{"name":"test_product","price":12345}'));
+        $data = [
+            'code' => 'DFF3246435',
+            'sectionCode' => 'FGH457964',
+            'name' => 'test_product',
+            'filters' => [
+                'GKD6844:FJLD4056345:FGFH435345',
+                'FGH457964:FGH457964:FGH457964',
+                'GKD6844:GKD6844:GKD6844',
+            ],
+        ];
+
+        $this->bus->dispatch((new ProductImport())->setMessage(json_encode($data)));
 
         return Command::SUCCESS;
     }
