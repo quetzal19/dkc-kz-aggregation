@@ -14,12 +14,18 @@ readonly class ProductDto
     )]
     public string $code;
 
+    public string $sectionCode;
+
     #[OA\Property(
         description: 'Название продукта',
         type: 'string',
         example: 'Лоток 100х35 L2000'
     )]
     public string $name;
+
+    public string $weight;
+
+    public string $volume;
 
     #[OA\Property(
         description: 'Список возможных фильтров',
