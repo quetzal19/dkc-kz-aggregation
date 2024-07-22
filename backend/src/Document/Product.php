@@ -2,6 +2,7 @@
 
 namespace App\Document;
 
+use DateTimeInterface;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 use App\Repository\ProductRepository;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -44,11 +45,18 @@ class Product
     )]
     protected array $filters = [];
 
-    /**
-     * Product constructor.
-     */
+    #[MongoDB\Field(type: "date")]
+    protected DateTimeInterface $createdAt;
+
+    #[MongoDB\Field(type: "date")]
+    protected DateTimeInterface $updatedAt;
+
+    protected bool $active = true;
+
     public function __construct()
     {
+        $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
     }
 
     public function getId(): string
@@ -119,5 +127,30 @@ class Product
     public function setFilters(array $filters): void
     {
         $this->filters = $filters;
+    }
+
+    public function getCreatedAt(): DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(DateTimeInterface $updatedAt): void
+    {
+        $this->updatedAt = $updatedAt;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    public function setActive(bool $active): void
+    {
+        $this->active = $active;
     }
 }
