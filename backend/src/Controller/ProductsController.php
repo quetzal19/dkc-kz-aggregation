@@ -13,14 +13,10 @@ use Symfony\Component\Routing\Annotation\Route;
 class ProductsController extends AbstractController
 {
 
-    #[Route('/products', name: 'products', methods: ['POST'])]
-    #[OA\RequestBody(
-        required: true,
-//        content: new Model(type: AddProductsDto::class)
-    )]
+    #[Route('/products', name: 'products', methods: ['GET'])]
     #[OA\Response(
         response: 200,
-        description: 'Возвращает список Task пользователя в Workspace',
+        description: 'Возвращает список товаров',
         content: new Model(type: TestResponse::class)
     )]
     public function add(): JsonResponse
