@@ -3,9 +3,11 @@
 namespace App\MessageHandler;
 
 use App\Document\Product;
+use App\Dto\ProductDto;
 use App\Message\ProductImport;
 use App\Service\ProductImport\ProductImportValidationException;
 use App\Service\ProductImport\ProductImportValidationService;
+use Exception;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -23,7 +25,9 @@ class ProductImportHandler
     {
         try {
             $data = json_decode($message->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-            $productDto = $this->productImportValidationService->validate($data);
+            $productDto = new ProductDto($data);
+
+            $this->productImportValidationService->validate($data);
 
             $product = new Product();
             $product->setCode($productDto->getCode());
@@ -41,8 +45,8 @@ class ProductImportHandler
             $this->productImportLogger->error(sprintf("Product import validation error: %s", $e->getMessage()));
         } catch (JsonException $e) {
             $this->productImportLogger->error(sprintf("Product import JSON error: %s", $e->getMessage()));
-
-            return;
+        } catch (Exception $e) {
+            $this->productImportLogger->error(sprintf("Product import unexpected error: %s", $e->getMessage()));
         }
     }
 }

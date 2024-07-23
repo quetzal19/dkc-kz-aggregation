@@ -11,15 +11,17 @@ class ProductImportValidationService
     {
     }
 
-    public function validate(array $data): ProductDto
+    /**
+     * @param ProductDto $productDto
+     * @return void
+     * @throws ProductImportValidationException
+     */
+    public function validate(ProductDto $productDto): void
     {
-        $productDto = new ProductDto($data);
         $errors = $this->validator->validate($productDto);
 
         if (count($errors) > 0) {
             throw new ProductImportValidationException($errors);
         }
-
-        return $productDto;
     }
 }
