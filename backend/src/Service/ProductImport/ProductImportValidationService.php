@@ -17,9 +17,6 @@ class ProductImportValidationService
         $errors = $this->validator->validate($productDto);
 
         if (count($errors) > 0) {
-            // log errors
-            $this->productImportLogger->error($errors);
-
             throw new ProductImportValidationException($errors);
         }
 

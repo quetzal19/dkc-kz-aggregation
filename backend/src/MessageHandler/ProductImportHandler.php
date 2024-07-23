@@ -4,15 +4,15 @@ namespace App\MessageHandler;
 
 use App\Document\Product;
 use App\Message\ProductImport;
+use App\Service\ProductImport\ProductImportValidationException;
 use App\Service\ProductImport\ProductImportValidationService;
+use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
 class ProductImportHandler
 {
-    protected const DATA_FORMAT = 'json';
-
     public function __construct(
         protected ProductImportValidationService $productImportValidationService,
         protected LoggerInterface $productImportLogger
@@ -23,7 +23,6 @@ class ProductImportHandler
     {
         try {
             $data = json_decode($message->getMessage(), true, 512, JSON_THROW_ON_ERROR);
-
             $productDto = $this->productImportValidationService->validate($data);
 
             $product = new Product();
@@ -34,11 +33,14 @@ class ProductImportHandler
             $product->setVolume($productDto->getVolume());
             $product->setFilters($productDto->getFilters());
 
+            // TODO: persist product, delete success message logging
             $this->productImportLogger->info(
-                'Product import: ' . $product->getName() . ' | filters: ' . json_encode($product->getFilters())
+                sprintf("Product import: %s | filters: %s", $product->getName(), json_encode($product->getFilters()))
             );
-        } catch (\Exception $e) {
-            $this->productImportLogger->error($e->getMessage());
+        } catch (ProductImportValidationException $e) {
+            $this->productImportLogger->error(sprintf("Product import validation error: %s", $e->getMessage()));
+        } catch (JsonException $e) {
+            $this->productImportLogger->error(sprintf("Product import JSON error: %s", $e->getMessage()));
 
             return;
         }
