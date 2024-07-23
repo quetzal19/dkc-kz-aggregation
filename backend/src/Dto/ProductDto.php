@@ -20,13 +20,38 @@ readonly class ProductDto
     protected string $volume;
 
     #[Assert\All(
-        constraints: [
-            new Assert\Type(type: 'string'),
-            new Assert\Regex(
-                pattern: '/^[^:]+:[^:]+:[^:]+$/',
-                message: 'Фильтры должны быть в формате "code:value:unit")'
-            )
-        ]
+        new Assert\Collection(
+            fields: [
+                'code' => [
+                    new Assert\Type(
+                        type: 'string',
+                        message: 'Код фильтра должен быть строкой'
+                    ),
+                    new Assert\NotBlank(
+                        message: 'Не задан код фильтра'
+                    ),
+                ],
+                'value' => [
+                    new Assert\Type(
+                        type: 'string',
+                        message: 'Значение фильтра должно быть строкой'
+                    ),
+                    new Assert\NotBlank(
+                        message: 'Не задано значение фильтра'
+                    ),
+                ],
+                'unit' => [
+                    new Assert\Type(
+                        type: 'string',
+                        message: 'Единица измерения фильтра должна быть строкой'
+                    ),
+                    new Assert\NotBlank(
+                        message: 'Не задана единица измерения фильтра'
+                    ),
+                ]
+            ],
+            allowMissingFields: false
+        )
     )]
     protected array $filters;
 

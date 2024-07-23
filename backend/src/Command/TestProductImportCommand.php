@@ -29,9 +29,22 @@ class TestProductImportCommand extends Command
             'sectionCode' => 'FGH457964',
             'name' => 'test_product',
             'filters' => [
-                'GKD6844:FJLD4056345:FGFH435345',
-                'FGH457964:FGH457964:FGH457964',
-                'GKD6844:GKD6844:GKD6844',
+                [
+                    'code' => 'GKD6844',
+                    'value' => 'FJLD4056345',
+                    'unit' => 'FGFH435345',
+
+                ],
+                [
+                    'code' => 'FGH457964',
+                    'value' => 'FGH457964',
+                    'unit' => 'FGH457964',
+                ],
+                [
+                    'code' => 'GKD6844',
+                    'value' => 'GKD6844',
+                    'unit' => 'GKD6844',
+                ]
             ],
         ];
 
