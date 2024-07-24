@@ -37,7 +37,6 @@ class ProductRepository extends ServiceDocumentRepository
         int $page,
         int $ipp
     ): array {
-
         $query = $this->createQueryBuilder()
             ->field('sectionCode')->equals($sectionCode)
             ->field('active')->equals(true);
@@ -56,6 +55,6 @@ class ProductRepository extends ServiceDocumentRepository
             ->skip(($page - 1) * $ipp)
             ->limit($ipp);
 
-        return $query->getQuery()->execute();
+        return $query->getQuery()->execute()->toArray();
     }
 }
