@@ -74,7 +74,6 @@ class TestProductImportCommand extends Command
                     ]
                 ],
             ],
-            // add more products with unique data
             [
                 'code' => 'GHD1234',
                 'sectionCode' => 'FGH4579',
@@ -82,7 +81,6 @@ class TestProductImportCommand extends Command
                 'volume' => '5',
                 'weight' => '6',
                 'filters' => [
-                    // add more filters with unique data
                     [
                         'code' => 'GFD1234',
                         'value' => 'FJH1234',
@@ -100,7 +98,6 @@ class TestProductImportCommand extends Command
                     ]
                 ],
             ],
-            // add more products with unique data
             [
                 'code' => 'GHD1237',
                 'sectionCode' => 'FGH4579',
@@ -108,7 +105,6 @@ class TestProductImportCommand extends Command
                 'volume' => '7',
                 'weight' => '8',
                 'filters' => [
-                    // add more filters with unique data
                     [
                         'code' => 'GFD1238',
                         'value' => 'FJH1238',
@@ -126,7 +122,6 @@ class TestProductImportCommand extends Command
                     ]
                 ],
             ],
-            // add more products with unique data
             [
                 'code' => 'GHD1241',
                 'sectionCode' => 'FGH4579',
@@ -134,7 +129,6 @@ class TestProductImportCommand extends Command
                 'volume' => '9',
                 'weight' => '10',
                 'filters' => [
-                    // add more filters with unique data
                     [
                         'code' => 'GFD1242',
                         'value' => 'FJH1242',
@@ -152,7 +146,6 @@ class TestProductImportCommand extends Command
                     ]
                 ],
             ],
-            // add more products with unique data
             [
                 'code' => 'GHD1245',
                 'sectionCode' => 'FGH4579',
@@ -160,7 +153,6 @@ class TestProductImportCommand extends Command
                 'volume' => '11',
                 'weight' => '12',
                 'filters' => [
-                    // add more filters with unique data
                     [
                         'code' => 'GFD1246',
                         'value' => 'FJH1246',
@@ -178,15 +170,13 @@ class TestProductImportCommand extends Command
                     ]
                 ],
             ],
-            // add more products with unique data
             [
                 'code' => 'GHD1249',
-                'sectionCode' => 'FGH4579',
+                'sectionCode' => 'FFE9544',
                 'name' => 'G product',
                 'volume' => '13',
                 'weight' => '14',
                 'filters' => [
-                    // add more filters with unique data
                     [
                         'code' => 'GFD1250',
                         'value' => 'FJH1250',
@@ -201,6 +191,30 @@ class TestProductImportCommand extends Command
                         'code' => 'GFD1252',
                         'value' => 'FJH1252',
                         'unit' => 'FGH1252',
+                    ]
+                ],
+            ],
+            [
+                'code' => 'GHD1253',
+                'sectionCode' => 'FFE9544',
+                'name' => 'H product',
+                'volume' => '15',
+                'weight' => '16',
+                'filters' => [
+                    [
+                        'code' => 'GFD1254',
+                        'value' => 'FJH1254',
+                        'unit' => 'FGH1254',
+                    ],
+                    [
+                        'code' => 'GFD1255',
+                        'value' => 'FJH1255',
+                        'unit' => 'FGH1255',
+                    ],
+                    [
+                        'code' => 'GFD1256',
+                        'value' => 'FJH1256',
+                        'unit' => 'FGH1256',
                     ]
                 ],
             ],

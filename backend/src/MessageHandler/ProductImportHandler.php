@@ -29,7 +29,9 @@ class ProductImportHandler
             $data = json_decode($message->getMessage(), true, 512, JSON_THROW_ON_ERROR);
             $productDto = new ProductDto($data);
 
-            $this->productImportValidationService->validate($productDto);
+            $this->productImportValidationService->validateDto($productDto);
+
+            // TODO: add product builder service with unit test
 
             $product = new Product();
             $product->setCode($productDto->getCode());
@@ -38,6 +40,8 @@ class ProductImportHandler
             $product->setWeight($productDto->getWeight());
             $product->setVolume($productDto->getVolume());
             $product->setFilters($productDto->getFilters());
+
+            $this->productImportValidationService->validate($product);
 
             $this->documentManager->persist($product);
             $this->documentManager->flush();

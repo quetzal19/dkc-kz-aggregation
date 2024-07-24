@@ -2,6 +2,7 @@
 
 namespace App\Service\ProductImport;
 
+use App\Document\Product;
 use App\Dto\ProductDto;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -16,9 +17,19 @@ class ProductImportValidationService
      * @return void
      * @throws ProductImportValidationException
      */
-    public function validate(ProductDto $productDto): void
+    public function validateDto(ProductDto $productDto): void
     {
         $errors = $this->validator->validate($productDto);
+
+        if (count($errors) > 0) {
+            throw new ProductImportValidationException($errors);
+        }
+    }
+
+    // validate Product
+    public function validate(Product $product): void
+    {
+        $errors = $this->validator->validate($product);
 
         if (count($errors) > 0) {
             throw new ProductImportValidationException($errors);
