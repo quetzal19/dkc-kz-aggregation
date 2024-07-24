@@ -7,9 +7,7 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
 use App\Repository\ProductRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @MongoDB\Document(repositoryClass=ProductRepository::class)
- */
+#[MongoDB\Document(repositoryClass: ProductRepository::class)]
 class Product
 {
     #[MongoDB\Id(type: "string", strategy: "UUID")]
@@ -51,6 +49,7 @@ class Product
     #[MongoDB\Field(type: "date")]
     protected DateTimeInterface $updatedAt;
 
+    #[MongoDB\Field(type: "bool")]
     protected bool $active = true;
 
     public function __construct()

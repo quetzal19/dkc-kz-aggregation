@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Dto\Api\Response\TestResponse;
+use App\Service\ProductListService;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,9 +20,18 @@ class ProductsController extends AbstractController
         description: 'Возвращает список товаров',
         content: new Model(type: TestResponse::class)
     )]
-    public function add(): JsonResponse
+    public function add(ProductListService $productListService): JsonResponse
     {
         $testDTO = new TestResponse('bar');
+
+        dd($productListService->getProducts(
+            'FGH4579',
+            [],
+            'code',
+            'asc',
+            1,
+            10
+        ));
 
         return new JsonResponse($testDTO->toArray());
     }

@@ -7,6 +7,7 @@ use App\Dto\ProductDto;
 use App\Message\ProductImport;
 use App\Service\ProductImport\ProductImportValidationException;
 use App\Service\ProductImport\ProductImportValidationService;
+use Doctrine\ODM\MongoDB\DocumentManager;
 use Exception;
 use JsonException;
 use Psr\Log\LoggerInterface;
@@ -17,7 +18,8 @@ class ProductImportHandler
 {
     public function __construct(
         protected ProductImportValidationService $productImportValidationService,
-        protected LoggerInterface $productImportLogger
+        protected LoggerInterface $productImportLogger,
+        protected DocumentManager $documentManager
     ) {
     }
 
@@ -27,7 +29,7 @@ class ProductImportHandler
             $data = json_decode($message->getMessage(), true, 512, JSON_THROW_ON_ERROR);
             $productDto = new ProductDto($data);
 
-            $this->productImportValidationService->validate($data);
+            $this->productImportValidationService->validate($productDto);
 
             $product = new Product();
             $product->setCode($productDto->getCode());
@@ -37,7 +39,9 @@ class ProductImportHandler
             $product->setVolume($productDto->getVolume());
             $product->setFilters($productDto->getFilters());
 
-            // TODO: persist product, delete success message logging
+            $this->documentManager->persist($product);
+            $this->documentManager->flush();
+
             $this->productImportLogger->info(
                 sprintf("Product import: %s | filters: %s", $product->getName(), json_encode($product->getFilters()))
             );
