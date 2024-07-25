@@ -24,15 +24,6 @@ class ProductsController extends AbstractController
     {
         $testDTO = new TestResponse('bar');
 
-        dd($productListService->getProducts(
-            'FGH4579',
-            [],
-            'code',
-            'asc',
-            1,
-            10
-        ));
-
         return new JsonResponse($testDTO->toArray());
     }
 }
