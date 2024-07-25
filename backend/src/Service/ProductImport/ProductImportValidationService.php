@@ -3,7 +3,7 @@
 namespace App\Service\ProductImport;
 
 use App\Document\Product;
-use App\Dto\ProductDto;
+use App\Dto\Product\ProductDto;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ProductImportValidationService

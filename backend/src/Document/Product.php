@@ -2,9 +2,11 @@
 
 namespace App\Document;
 
+use App\Dto\Product\ProductDto;
+use App\Dto\Product\ProductFilterInterface;
+use App\Repository\ProductRepository;
 use DateTimeInterface;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
-use App\Repository\ProductRepository;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[MongoDB\Document(repositoryClass: ProductRepository::class)]
@@ -56,6 +58,19 @@ class Product
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+    }
+
+    public static function fromDto(ProductDto $productDto): static
+    {
+        $product = new static();
+        $product->setCode($productDto->getCode());
+        $product->setSectionCode($productDto->getSectionCode());
+        $product->setName($productDto->getName());
+        $product->setWeight($productDto->getWeight());
+        $product->setVolume($productDto->getVolume());
+        $product->setFilters($productDto->getFilters());
+
+        return $product;
     }
 
     public function getId(): string
@@ -123,9 +138,21 @@ class Product
         return $this->filters;
     }
 
+    /**
+     * @param ProductFilterInterface[] $filters
+     * @return void
+     */
     public function setFilters(array $filters): void
     {
-        $this->filters = $filters;
+        $this->filters = array_map(
+            static fn(ProductFilterInterface $filter) => sprintf(
+                "%s:%s:%s",
+                $filter->getCode(),
+                $filter->getValue(),
+                $filter->getUnit()
+            ),
+            $filters
+        );
     }
 
     public function getCreatedAt(): DateTimeInterface

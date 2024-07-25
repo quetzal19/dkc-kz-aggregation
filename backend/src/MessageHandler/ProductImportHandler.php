@@ -3,7 +3,7 @@
 namespace App\MessageHandler;
 
 use App\Document\Product;
-use App\Dto\ProductDto;
+use App\Dto\Product\ProductDto;
 use App\Message\ProductImport;
 use App\Service\ProductImport\ProductImportValidationException;
 use App\Service\ProductImport\ProductImportValidationService;
@@ -30,16 +30,9 @@ class ProductImportHandler
             $productDto = new ProductDto($data);
 
             $this->productImportValidationService->validateDto($productDto);
-
             // TODO: add product builder service with unit test
 
-            $product = new Product();
-            $product->setCode($productDto->getCode());
-            $product->setSectionCode($productDto->getSectionCode());
-            $product->setName($productDto->getName());
-            $product->setWeight($productDto->getWeight());
-            $product->setVolume($productDto->getVolume());
-            $product->setFilters($productDto->getFilters());
+            $product = Product::fromDto($productDto);
 
             $this->productImportValidationService->validate($product);
 
