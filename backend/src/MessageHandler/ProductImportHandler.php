@@ -13,6 +13,9 @@ use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
+/**
+ * Тестовый обработчик, предположительно должен быть удалён. Импорт товаров будет осуществляться по другому.
+ */
 #[AsMessageHandler]
 class ProductImportHandler
 {
@@ -30,7 +33,6 @@ class ProductImportHandler
             $productDto = new ProductDto($data);
 
             $this->productImportValidationService->validateDto($productDto);
-            // TODO: add product builder service with unit test
 
             $product = Product::fromDto($productDto);
 

@@ -2,6 +2,9 @@
 
 namespace App\Message;
 
+/**
+ * Тестовое сообщение для импорта продуктов, удалить при необходимости
+ */
 class ProductImport
 {
     protected string $message;
