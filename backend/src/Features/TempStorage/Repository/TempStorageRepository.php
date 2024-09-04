@@ -4,8 +4,8 @@ namespace App\Features\TempStorage\Repository;
 
 use App\Document\Storage\Temp\TempStorage;
 use App\Helper\Enum\SortType;
-use Doctrine\ODM\MongoDB\MongoDBException;
 use Doctrine\Bundle\MongoDBBundle\{ManagerRegistry, Repository\ServiceDocumentRepository};
+use Doctrine\ODM\MongoDB\{Aggregation\Builder, MongoDBException};
 
 class TempStorageRepository extends ServiceDocumentRepository
 {
@@ -20,8 +20,20 @@ class TempStorageRepository extends ServiceDocumentRepository
     public function findHighPriority(): \Iterator
     {
         return $this->createQueryBuilder()
-            ->sort('priority',  SortType::DESC->value)
+            ->sort('priority', SortType::DESC->value)
             ->getQuery()
             ->execute();
+    }
+
+    public function builderBasePipeline(): Builder
+    {
+        $builder = $this->createAggregationBuilder();
+
+        $builder
+            ->sort('timestamp', SortType::ASC->value)
+            ->sort('actionPriority', SortType::DESC->value)
+            ->sort('priority', SortType::DESC->value);
+
+        return $builder;
     }
 }

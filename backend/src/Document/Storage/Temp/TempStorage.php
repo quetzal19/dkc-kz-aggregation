@@ -22,6 +22,9 @@ class TempStorage
         private string $action,
 
         #[MongoDB\Field(type: Type::INT)]
+        private int $actionPriority,
+
+        #[MongoDB\Field(type: Type::INT)]
         private int $priority,
 
         #[MongoDB\Field(type: Type::STRING)]
@@ -82,5 +85,29 @@ class TempStorage
     public function setMessage(string $message): void
     {
         $this->message = $message;
+    }
+
+    public function getActionPriority(): int
+    {
+        return $this->actionPriority;
+    }
+
+    public function setActionPriority(int $actionPriority): void
+    {
+        $this->actionPriority = $actionPriority;
+    }
+
+    public function __toString(): string
+    {
+        $arrayProperties = [
+            'id' => $this->id,
+            'timestamp' => $this->timestamp,
+            'entity' => $this->entity,
+            'action' => $this->action,
+            'actionPriority' => $this->actionPriority,
+            'priority' => $this->priority,
+            'message' => $this->message
+        ];
+        return json_encode($arrayProperties, JSON_PRETTY_PRINT);
     }
 }

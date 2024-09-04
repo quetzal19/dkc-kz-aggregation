@@ -3,8 +3,7 @@
 namespace App\Features\TempStorage\Service;
 
 use App\Document\Storage\Temp\TempStorage;
-use Doctrine\ODM\MongoDB\DocumentManager;
-use Doctrine\ODM\MongoDB\MongoDBException;
+use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 
 readonly class TempStorageService
 {

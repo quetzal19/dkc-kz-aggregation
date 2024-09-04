@@ -26,12 +26,13 @@ class TestCreateTempStorageCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        [$timeStamp, $entity, $action, $priority] = ['1721900360', 'etim_feature', 'update', 1];
+        [$timeStamp, $entity, $action, $priority, $actionPriority] = ['1721900360', 'etim_feature', 'update', 1, 1];
 
         $testStorage = new TempStorage(
             timestamp: $timeStamp,
             entity: $entity,
             action: $action,
+            actionPriority: $actionPriority,
             priority: $priority,
             message: '{}'
         );
