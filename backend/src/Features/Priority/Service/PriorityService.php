@@ -4,7 +4,7 @@ namespace App\Features\Priority\Service;
 
 use App\Document\Storage\Temp\TempStorage;
 use App\Features\Priority\Filter\PriorityFilter;
-use Doctrine\ODM\MongoDB\{Aggregation\Builder, DocumentManager};
+use App\Features\TempStorage\Repository\TempStorageRepository;
 use Exception;
 use LogicException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -18,7 +18,7 @@ final readonly class PriorityService
         #[Autowire('%app.entity_priorities%')]
         private array $entityPriorities,
 
-        private DocumentManager $documentManager,
+        private TempStorageRepository $storageRepository,
     ) {
     }
 
@@ -28,44 +28,7 @@ final readonly class PriorityService
      */
     public function getMaxPriorityData(PriorityFilter $priorityFilter): array
     {
-        /** @var Builder $builder */
-        $builder = $this->documentManager
-            ->getRepository(TempStorage::class)
-            ->builderBasePipeline();
-
-        if ($paginationDTO = $priorityFilter->paginationDTO) {
-            $builder
-                ->limit($paginationDTO->getLimit())
-                ->skip($paginationDTO->getSkip());
-        }
-
-        if ($priorityFilter->entity) {
-            $builder
-                ->match()
-                ->field('entity')
-                ->equals($priorityFilter->entity);
-        }
-
-        if ($priorityFilter->action) {
-            $builder
-                ->match()
-                ->field('action')
-                ->equals($priorityFilter->action);
-        }
-
-        if ($priorityFilter->priority) {
-            $builder
-                ->match()
-                ->field('priority')
-                ->equals($priorityFilter->priority);
-        }
-
-        if ($priorityFilter->actionPriority) {
-            $builder
-                ->match()
-                ->field('actionPriority')
-                ->equals($priorityFilter->actionPriority);
-        }
+        $builder = $this->storageRepository->builderBasePipeline($priorityFilter);
 
         $result = $builder
             ->hydrate(TempStorage::class)
