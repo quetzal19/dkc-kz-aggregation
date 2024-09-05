@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Features\Pagination\DTO;
+namespace App\Helper\Pagination\DTO;
 
 final readonly class PaginationDTO
 {

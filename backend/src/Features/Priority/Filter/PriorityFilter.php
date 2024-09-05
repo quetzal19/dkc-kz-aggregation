@@ -2,7 +2,7 @@
 
 namespace App\Features\Priority\Filter;
 
-use App\Features\Pagination\DTO\PaginationDTO;
+use App\Helper\Pagination\DTO\PaginationDTO;
 
 final readonly class PriorityFilter
 {

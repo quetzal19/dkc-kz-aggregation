@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Features\TempStorage\Message\TempStorageMessage;
+use App\Features\TempStorage\DTO\TempStorageDTO;
 use Symfony\Component\Console\{Attribute\AsCommand,
     Command\Command,
     Input\InputArgument,
@@ -96,10 +96,10 @@ final class TestFillingQueueByFiles extends Command
                     break 2;
                 }
 
-                /** @var TempStorageMessage $storageMessage */
+                /** @var TempStorageDTO $storageMessage */
                 $storageMessage = $this->serializer->deserialize(
                     json_encode($jsonObject),
-                    TempStorageMessage::class,
+                    TempStorageDTO::class,
                     'json',
                 );
 

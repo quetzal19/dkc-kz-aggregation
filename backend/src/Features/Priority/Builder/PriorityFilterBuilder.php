@@ -2,8 +2,8 @@
 
 namespace App\Features\Priority\Builder;
 
-use App\Features\Pagination\DTO\PaginationDTO;
 use App\Features\Priority\Filter\PriorityFilter;
+use App\Helper\Pagination\DTO\PaginationDTO;
 
 final class PriorityFilterBuilder
 {
