@@ -15,7 +15,7 @@ final readonly class SectionMessageDTO
             message: 'Некорректная локализация',
             groups: ['create', 'update', 'delete']
         )]
-        public mixed $locale,
+        public mixed $locale = null,
 
         #[Assert\Type(
             type: 'string',
@@ -27,7 +27,7 @@ final readonly class SectionMessageDTO
             maxMessage: 'Идентификатор родительской секции не может быть больше 50 символов',
             groups: ['create', 'update']
         )]
-        public mixed $parentId,
+        public mixed $parentId = null,
 
         #[Assert\NotBlank(groups: ['create'])]
         #[Assert\Type(
@@ -35,13 +35,13 @@ final readonly class SectionMessageDTO
             message: 'Активность должна быть булевым значением',
             groups: ['create', 'update']
         )]
-        public mixed $active,
+        public mixed $active = null,
 
         #[Assert\NotBlank(message: 'Сортировка не может быть пустым', groups: ['create'])]
         #[Assert\Type(type: 'integer', message: 'Сортировка должна быть строкой', groups: ['create', 'update'])]
         #[Assert\PositiveOrZero(message: 'Сортировка должна быть положительной', groups: ['create', 'update'])]
         #[Assert\LessThan(value: 1000, message: 'Сортировка должна быть меньше 1000', groups: ['create', 'update'])]
-        public mixed $sort,
+        public mixed $sort = null,
 
 
         #[Assert\NotBlank(message: 'Название секции не может быть пустым', groups: ['create'])]
@@ -51,12 +51,12 @@ final readonly class SectionMessageDTO
             maxMessage: 'Название секции не может быть больше 300 символов',
             groups: ['create', 'update']
         )]
-        public mixed $name,
+        public mixed $name = null,
 
 
         #[Assert\NotBlank(message: 'Код секции не может быть пустым', groups: ['create', 'update', 'delete'])]
         #[Assert\Type(type: 'string', message: 'Код секции должен быть строкой', groups: ['create', 'update', 'delete'])]
-        public mixed $code,
+        public mixed $code = null,
     ) {
     }
 }
