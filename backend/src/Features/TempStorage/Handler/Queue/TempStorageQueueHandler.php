@@ -2,12 +2,11 @@
 
 namespace App\Features\TempStorage\Handler\Queue;
 
-use App\Helper\Interface\MapperInterface;
 use App\Features\TempStorage\{DTO\TempStorageDTO,
     Mapper\TempStorageMapper,
     Service\TempStorageService,
-    Service\TempStorageValidatorService
-};
+    Service\TempStorageValidatorService};
+use App\Helper\Interface\Mapper\MapperInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]

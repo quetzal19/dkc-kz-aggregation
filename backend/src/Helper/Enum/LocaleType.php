@@ -14,10 +14,25 @@ enum LocaleType: int
             return LocaleType::LOCALE_RU;
         }
 
-        return match ($value) {
+        $localeNames = self::getNameLocaleTypes();
+        if (!array_key_exists($value, $localeNames)) {
+            return LocaleType::LOCALE_RU;
+        }
+
+        return $localeNames[$value];
+    }
+
+    public static function getNameLocaleTypes(): array
+    {
+        return [
+            'ru' => LocaleType::LOCALE_RU,
             'en' => LocaleType::LOCALE_EN,
-            'kz' => LocaleType::LOCALE_KZ,
-            default => LocaleType::LOCALE_RU
-        };
+            'kz' => LocaleType::LOCALE_KZ
+        ];
+    }
+
+    public static function getNamesLocale(): array
+    {
+        return array_keys(self::getNameLocaleTypes());
     }
 }

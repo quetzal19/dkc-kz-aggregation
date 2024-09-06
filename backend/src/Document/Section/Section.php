@@ -123,7 +123,7 @@ class Section extends TreeNode
     {
         $this->setParentNode($parent);
 
-        $this->parentCode = $parent->getCode();
+        $this->parentCode = $parent?->getCode();
 
         return $this;
     }
