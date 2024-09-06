@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Command;
+namespace App\Command\Test;
 
 use App\Features\Priority\Builder\PriorityFilterBuilder;
 use App\Features\Priority\Service\PriorityService;

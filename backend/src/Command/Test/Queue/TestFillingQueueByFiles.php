@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Command;
+namespace App\Command\Test\Queue;
 
 use App\Features\TempStorage\DTO\TempStorageDTO;
 use Symfony\Component\Console\{Attribute\AsCommand,

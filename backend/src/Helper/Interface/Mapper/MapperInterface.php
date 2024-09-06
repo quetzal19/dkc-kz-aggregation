@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Helper\Interface;
+namespace App\Helper\Interface\Mapper;
 
 interface MapperInterface
 {

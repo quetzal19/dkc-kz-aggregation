@@ -25,3 +25,10 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     App\Helper\Interface\MapperInterface $tempStorageMapper: '@App\Features\TempStorage\Mapper\TempStorageMapper'
+    App\Helper\Interface\MapperMessageInterface $sectionMapper: '@App\Features\Section\Mapper\SectionMapper'
+
+    app.service_handler_storage_locator:
+        class: Symfony\Component\DependencyInjection\ServiceLocator
+        arguments:
+            -
+                b_iblock_section: '@App\Features\Section\Handler\SectionHandlerStorage'

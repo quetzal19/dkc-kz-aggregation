@@ -22,7 +22,7 @@ final class PriorityFilterBuilder
     public function build(): PriorityFilter
     {
         $pagination = null;
-        if (is_null($this->page) && is_null($this->limit)) {
+        if (!is_null($this->page) && !is_null($this->limit)) {
             $pagination = new PaginationDTO($this->page, $this->limit);
         }
         return new PriorityFilter(

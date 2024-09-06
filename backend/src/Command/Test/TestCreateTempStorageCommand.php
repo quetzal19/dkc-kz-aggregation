@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Command;
+namespace App\Command\Test;
 
 use App\Document\Storage\Temp\TempStorage;
 use App\Features\TempStorage\Service\TempStorageService;

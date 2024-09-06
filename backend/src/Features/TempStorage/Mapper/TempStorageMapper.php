@@ -5,7 +5,7 @@ namespace App\Features\TempStorage\Mapper;
 use App\Document\Storage\Temp\TempStorage;
 use App\Features\Priority\Service\PriorityService;
 use App\Features\TempStorage\DTO\TempStorageDTO;
-use App\Helper\Interface\MapperInterface;
+use App\Helper\Interface\Mapper\MapperInterface;
 use LogicException;
 
 readonly class TempStorageMapper implements MapperInterface
