@@ -2,9 +2,9 @@
 
 namespace App\Helper\Interface;
 
-use App\Document\Storage\Temp\TempStorage;
+use App\Helper\Interface\Storage\StorageInterface;
 
 interface EntityHandlerStorageInterface
 {
-    public function handle(TempStorage $storage): void;
+    public function handle(StorageInterface $storage): void;
 }

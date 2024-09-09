@@ -2,7 +2,7 @@
 
 namespace App\Helper\Locator\Storage;
 
-use App\Helper\Interface\EntityHandlerStorageInterface;
+use App\Helper\Abstract\AbstractEntityHandlerStorage;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
@@ -14,7 +14,7 @@ readonly class ServiceHandlerStorageLocator
     ) {
     }
 
-    public function getHandler(string $entity): ?EntityHandlerStorageInterface
+    public function getHandler(string $entity): ?AbstractEntityHandlerStorage
     {
         if (!$this->locator->has($entity)) {
             return null;

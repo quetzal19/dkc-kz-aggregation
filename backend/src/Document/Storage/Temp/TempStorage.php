@@ -3,10 +3,11 @@
 namespace App\Document\Storage\Temp;
 
 use App\Features\TempStorage\Repository\TempStorageRepository;
+use App\Helper\Interface\Storage\StorageInterface;
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
 #[MongoDB\Document(repositoryClass: TempStorageRepository::class)]
-class TempStorage
+class TempStorage implements StorageInterface
 {
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
     private string $id;
