@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Document\Section;
+namespace App\Document\Product;
 
+use App\Document\Section\Section;
+use App\Features\Product\Repository\ProductRepository;
 use App\Helper\Enum\LocaleType;
-use App\Patterns\TreeNode;
-use DateTimeInterface;
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
-use App\Features\Section\Repository\SectionRepository;
 
-#[MongoDB\Document(repositoryClass: SectionRepository::class)]
+#[MongoDB\Document(repositoryClass: ProductRepository::class)]
 #[MongoDB\UniqueIndex(keys: ['code' => 'asc', 'locale' => 'asc'])]
-#[MongoDB\HasLifecycleCallbacks()]
-class Section extends TreeNode
+class Product
 {
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
     private string $id;
@@ -22,23 +20,20 @@ class Section extends TreeNode
     #[MongoDB\Field(type: Type::INT, enumType: LocaleType::class)]
     private LocaleType $locale;
 
-    #[MongoDB\Field(type: Type::STRING, nullable: true)]
-    private ?string $parentCode = null;
-
-    #[MongoDB\Field(type: Type::STRING)]
-    private string $name;
+    #[MongoDB\ReferenceOne(targetDocument: Section::class)]
+    private Section $section;
 
     #[MongoDB\Field(type: Type::BOOL)]
-    private bool $active = true;
+    private bool $active;
 
     #[MongoDB\Field(type: Type::INT)]
-    private int $sort = 100;
-
-    #[MongoDB\Field(type: Type::DATE)]
-    private ?DateTimeInterface $updatedAt = null;
+    private int $sort;
 
     #[MongoDB\Field(type: Type::STRING)]
-    protected ?string $path = null;
+    private string $weight;
+
+    #[MongoDB\Field(type: Type::STRING)]
+    private string $volume;
 
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
     private ?string $externalId = null;
@@ -48,12 +43,18 @@ class Section extends TreeNode
         return $this->id;
     }
 
+    public function setId(string $id): Product
+    {
+        $this->id = $id;
+        return $this;
+    }
+
     public function getCode(): string
     {
         return $this->code;
     }
 
-    public function setCode(string $code): Section
+    public function setCode(string $code): Product
     {
         $this->code = $code;
         return $this;
@@ -64,20 +65,9 @@ class Section extends TreeNode
         return $this->locale;
     }
 
-    public function setLocale(LocaleType $locale): Section
+    public function setLocale(LocaleType $locale): Product
     {
         $this->locale = $locale;
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): Section
-    {
-        $this->name = $name;
         return $this;
     }
 
@@ -86,7 +76,7 @@ class Section extends TreeNode
         return $this->active;
     }
 
-    public function setActive(bool $active): Section
+    public function setActive(bool $active): Product
     {
         $this->active = $active;
         return $this;
@@ -97,36 +87,42 @@ class Section extends TreeNode
         return $this->sort;
     }
 
-    public function setSort(int $sort): Section
+    public function setSort(int $sort): Product
     {
         $this->sort = $sort;
         return $this;
     }
 
-    public function getUpdatedAt(): ?DateTimeInterface
+    public function getWeight(): string
     {
-        return $this->updatedAt;
+        return $this->weight;
     }
 
-    #[MongoDB\PreUpdate()]
-    #[MongoDB\PrePersist()]
-    public function setUpdatedAt(): Section
+    public function setWeight(string $weight): Product
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->weight = $weight;
         return $this;
     }
 
-    public function getParentCode(): ?string
+    public function getVolume(): string
     {
-        return $this->parentCode;
+        return $this->volume;
     }
 
-    public function setParent(?Section $parent): Section
+    public function setVolume(string $volume): Product
     {
-        $this->setParentNode($parent);
+        $this->volume = $volume;
+        return $this;
+    }
 
-        $this->parentCode = $parent?->getCode();
+    public function getSection(): Section
+    {
+        return $this->section;
+    }
 
+    public function setSection(Section $section): Product
+    {
+        $this->section = $section;
         return $this;
     }
 
@@ -135,9 +131,10 @@ class Section extends TreeNode
         return $this->externalId;
     }
 
-    public function setExternalId(?string $externalId): Section
+    public function setExternalId(?string $externalId): Product
     {
         $this->externalId = $externalId;
         return $this;
     }
+
 }
