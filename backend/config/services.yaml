@@ -40,3 +40,13 @@ services:
 
     map.section.mapper:
         class: 'App\Features\Section\Mapper\SectionMapper'
+
+    map.property.mapper:
+        class: 'App\Features\Property\Mapper\PropertyMapper'
+
+    map.property.name.mapper:
+        class: 'App\Features\Property\Mapper\PropertyNameMapper'
+
+
+    App\Features\Property\Serializer\Denormalizer\PropertyMessageDTODenormalizer:
+        tags: [ 'serializer.normalizer' ]
