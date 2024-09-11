@@ -33,7 +33,7 @@ abstract readonly class AbstractEntityHandlerStorage implements EntityHandlerSto
         }
 
         if (!method_exists($this->actionService, $action)) {
-            $this->logger->error("Method '$action' not found, in section action service");
+            $this->logger->error("Method '$action' not found, in class " . get_class($this->actionService));
             return;
         }
 

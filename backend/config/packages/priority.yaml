@@ -5,11 +5,11 @@ parameters:
     create: 3
 
   app.entity_priorities:
-    b_iblock_section: 1
-    b_iblock_element: 2
-    etim_value: 3
-    etim_feature: 4
-    etim_unit: 5
-    product_features: 6
-    facet_feature_section: 7
-    etim_art_class_feature_map: 8
+    b_iblock_section: 8
+    b_iblock_element: 7
+    etim_value: 5
+    etim_feature: 6
+    etim_unit: 2
+    product_features: 4
+    facet_feature_section: 1
+    etim_art_class_feature_map: 3
