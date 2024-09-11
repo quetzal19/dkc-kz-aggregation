@@ -38,6 +38,9 @@ class Product
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
     private ?string $externalId = null;
 
+    #[MongoDB\Field(type: Type::STRING, nullable: true)]
+    private ?string $artClassId = null;
+
     public function getId(): string
     {
         return $this->id;
@@ -134,6 +137,17 @@ class Product
     public function setExternalId(?string $externalId): Product
     {
         $this->externalId = $externalId;
+        return $this;
+    }
+
+    public function getArtClassId(): ?string
+    {
+        return $this->artClassId;
+    }
+
+    public function setArtClassId(?string $artClassId): Product
+    {
+        $this->artClassId = $artClassId;
         return $this;
     }
 

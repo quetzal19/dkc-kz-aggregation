@@ -23,6 +23,7 @@ final readonly class ProductMapper implements MapperMessageInterface
 
         return $entity
             ->setExternalId($dto->id)
+            ->setArtClassId($dto->etimArtClassId)
             ->setCode($dto->code)
             ->setLocale(LocaleType::fromString($dto->locale))
             ->setActive($dto->active ?? $entity->isActive())
