@@ -39,11 +39,18 @@ final class TestFillingQueueByFiles extends Command
             'Number of messages to fill queue',
             1
         );
+        $this->addArgument(
+            'entity',
+            InputArgument::OPTIONAL,
+            'Entity to fill queue'
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $numberMessages = $input->getArgument('number');
+        $entity = $input->getArgument('entity');
+
         if (!is_numeric($numberMessages) || $numberMessages < 1) {
             $output->writeln('Number is not valid: ' . $numberMessages);
             return Command::FAILURE;
@@ -96,6 +103,10 @@ final class TestFillingQueueByFiles extends Command
                     break 2;
                 }
 
+                if (!empty($entity) && array_key_exists('entity', $jsonObject) && $jsonObject['entity'] != $entity) {
+                    continue;
+                }
+
                 /** @var TempStorageDTO $storageMessage */
                 $storageMessage = $this->serializer->deserialize(
                     json_encode($jsonObject),
@@ -116,7 +127,7 @@ final class TestFillingQueueByFiles extends Command
 
         if ($totalCountFillingMessages == 0) {
             $output->writeln(
-                'Files with extension "' . self::DATA_FILE_EXTENSION . '" not found in ' . $this->pathToData
+                'Error filling queue, check if all the files are in the folder or if they are valid: ' . $this->pathToData
             );
             return Command::FAILURE;
         }

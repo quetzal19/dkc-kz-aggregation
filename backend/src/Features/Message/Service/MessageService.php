@@ -24,6 +24,7 @@ final readonly class MessageService
             $message, $typeDTO, 'json'
         );
 
+
         try {
             $this->validatorService->validateMessageDTO($dto, $groups);
         } catch (ValidationFailedException $e) {
@@ -33,8 +34,6 @@ final readonly class MessageService
             );
             return null;
         }
-
-
 
         return $dto;
     }

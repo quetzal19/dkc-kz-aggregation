@@ -7,17 +7,17 @@ use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 #[MongoDB\EmbeddedDocument]
 class PropertyName
 {
-    #[MongoDB\Field(type: Type::STRING)]
-    private string $name;
+    #[MongoDB\Field(type: Type::STRING, nullable: true)]
+    private ?string $name;
     #[MongoDB\Field(type: Type::STRING)]
     private string $locale;
 
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    public function setName(string $name): PropertyName
+    public function setName(?string $name): PropertyName
     {
         $this->name = $name;
         return $this;
