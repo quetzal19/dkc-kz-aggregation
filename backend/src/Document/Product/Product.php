@@ -41,6 +41,9 @@ class Product
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
     private ?string $artClassId = null;
 
+    #[MongoDB\Field(type: Type::COLLECTION)]
+    private array $property = [];
+
     public function getId(): string
     {
         return $this->id;
@@ -148,6 +151,17 @@ class Product
     public function setArtClassId(?string $artClassId): Product
     {
         $this->artClassId = $artClassId;
+        return $this;
+    }
+
+    public function getProperty(): array
+    {
+        return $this->property;
+    }
+
+    public function setProperty(array $property): Product
+    {
+        $this->property = $property;
         return $this;
     }
 
