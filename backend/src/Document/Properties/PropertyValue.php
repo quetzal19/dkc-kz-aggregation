@@ -3,7 +3,7 @@
 namespace App\Document\Properties;
 
 use App\Document\Properties\Name\PropertyName;
-use App\Features\PropertyValue\Repository\PropertyValueRepository;
+use App\Features\Properties\PropertyValue\Repository\PropertyValueRepository;
 use Doctrine\Common\Collections\{ArrayCollection, Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
@@ -15,6 +15,12 @@ class PropertyValue
     private ?string $id;
 
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
+    #[MongoDB\Index(keys: ['code' => 1], partialFilterExpression: [
+        '$and' => [
+            ['code' => ['$ne' => '']],
+            ['code' => ['$ne' => null]]
+        ]
+    ])]
     private ?string $code;
 
     #[MongoDB\EmbedMany(targetDocument: PropertyName::class)]
