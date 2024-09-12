@@ -3,7 +3,7 @@
 namespace App\Document\Properties;
 
 use App\Document\Properties\{Name\PropertyName, Unit\PropertyUnit};
-use App\Features\Property\Repository\PropertyRepository;
+use App\Features\Properties\Property\Repository\PropertyRepository;
 use Doctrine\Common\Collections\{ArrayCollection, Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 

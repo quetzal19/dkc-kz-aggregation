@@ -31,9 +31,9 @@ services:
             -
                 b_iblock_section: '@App\Features\Section\Handler\SectionHandlerStorage'
                 b_iblock_element: '@App\Features\Product\Handler\ProductHandlerStorage'
-                etim_feature: '@App\Features\Property\Handler\PropertyHandlerStorage'
-                etim_value: '@App\Features\PropertyValue\Handler\PropertyValueHandlerStorage'
-                etim_unit: '@App\Features\PropertyUnit\Handler\PropertyUnitHandlerStorage'
+                etim_feature: '@App\Features\Properties\Property\Handler\PropertyHandlerStorage'
+                etim_value: '@App\Features\Properties\PropertyValue\Handler\PropertyValueHandlerStorage'
+                etim_unit: '@App\Features\Properties\PropertyUnit\Handler\PropertyUnitHandlerStorage'
 
     map.product.mapper:
         class: 'App\Features\Product\Mapper\ProductMapper'
@@ -42,11 +42,20 @@ services:
         class: 'App\Features\Section\Mapper\SectionMapper'
 
     map.property.mapper:
-        class: 'App\Features\Property\Mapper\PropertyMapper'
+        class: 'App\Features\Properties\Property\Mapper\PropertyMapper'
 
     map.property.name.mapper:
-        class: 'App\Features\Property\Mapper\PropertyNameMapper'
+        class: 'App\Features\Properties\PropertyName\Mapper\PropertyNameMapper'
 
+    map.property.value.mapper:
+        class: 'App\Features\Properties\PropertyValue\Mapper\PropertyValueMapper'
 
-    App\Features\Property\Serializer\Denormalizer\PropertyMessageDTODenormalizer:
+    App\Features\Properties\Property\Serializer\Denormalizer\PropertyMessageDTODenormalizer:
+        tags: [ 'serializer.normalizer' ]
+
+    App\Features\Properties\PropertyValue\Serializer\Denormalizer\PropertyValueMessageDTODenormalizer:
+        tags: [ 'serializer.normalizer' ]
+
+    map.property.name.dto.denormalizer:
+        class: 'App\Features\Properties\PropertyName\Serializer\Denormalizer\PropertyNameDTODenormalizer'
         tags: [ 'serializer.normalizer' ]
