@@ -39,7 +39,6 @@ final readonly class SectionMessageDTO implements MessageDTOInterface
         )]
         public mixed $active = null,
 
-        #[Assert\NotBlank(message: 'Сортировка не может быть пустым', groups: ['create'])]
         #[Assert\Type(type: 'integer', message: 'Сортировка должна быть строкой', groups: ['create', 'update'])]
         #[Assert\PositiveOrZero(message: 'Сортировка должна быть положительной', groups: ['create', 'update'])]
         #[Assert\LessThan(value: IntegerHelper::MAX_SIZE_INTEGER, message: 'Сортировка должна быть меньше 2147483647', groups: ['create', 'update'])]

@@ -3,9 +3,10 @@
 namespace App\Features\Priority\Builder;
 
 use App\Features\Priority\Filter\PriorityFilter;
+use App\Helper\Interface\BuilderInterface;
 use App\Helper\Pagination\DTO\PaginationDTO;
 
-final class PriorityFilterBuilder
+final class PriorityFilterBuilder implements BuilderInterface
 {
     private ?int $limit = null;
     private ?int $page = null;

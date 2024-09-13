@@ -41,6 +41,7 @@ class Product
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
     private ?string $artClassId = null;
 
+    /** @var string[] $property */
     #[MongoDB\Field(type: Type::COLLECTION)]
     private array $property = [];
 
@@ -157,6 +158,54 @@ class Product
     public function getProperty(): array
     {
         return $this->property;
+    }
+
+    public function removePropertyByFeature(string $featureCode): void
+    {
+        if (empty($this->property)) {
+            return;
+        }
+
+        foreach ($this->property as $index => $property) {
+            [$feature] = explode(':', $property);
+            if ($feature == $featureCode) {
+                unset($this->property[$index]);
+                break;
+            }
+        }
+    }
+
+    public function setProperties(?string $feature = null, ?string $value = null, ?string $unit = null): Product
+    {
+        $featureIsEmpty = empty($feature);
+        $valueIsEmpty = empty($value);
+        $unitIsEmpty = empty($unit);
+
+        if ($featureIsEmpty || ($valueIsEmpty && $unitIsEmpty)) {
+            return $this;
+        }
+
+        if (empty($this->property)) {
+            $this->property[] = implode(':', [$feature, $value, $unit]);
+            return $this;
+        }
+
+        foreach ($this->property as $index => $property) {
+            [$featureCode, $valueCode, $unitCode] = explode(':', $property);
+
+            if ($featureCode == $feature) {
+                $propertyString = implode(':', [
+                    $feature,
+                    $valueIsEmpty ? $valueCode : $value,
+                    $unitIsEmpty ? $unitCode : $unit
+                ]);
+
+                $this->property[$index] = $propertyString;
+                break;
+            }
+        }
+
+        return $this;
     }
 
     public function setProperty(array $property): Product
