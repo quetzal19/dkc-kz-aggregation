@@ -17,9 +17,11 @@ class Property
     #[MongoDB\Field(type: Type::STRING)]
     private ?string $code;
 
+    /** @var Collection<int, PropertyName> $names */
     #[MongoDB\EmbedMany(targetDocument: PropertyName::class)]
     private Collection $names;
 
+    /** @var Collection<int, PropertyUnit> $units */
     #[MongoDB\EmbedMany(targetDocument: PropertyUnit::class)]
     private Collection $units;
 
@@ -78,6 +80,48 @@ class Property
     public function addUnit(PropertyUnit $unit): Property
     {
         $this->units->add($unit);
+        return $this;
+    }
+
+    /** @param null|Collection<int, PropertyName> $names */
+    public function addOrUpdateUnit(string $code, ?Collection $names = null): void
+    {
+        $names ??= new ArrayCollection();
+
+        if ($this->units->isEmpty()) {
+            $this->units->add(
+                (new PropertyUnit())
+                    ->setCode($code)
+                    ->setNames($names)
+            );
+        }
+
+        foreach ($this->units as $unit) {
+            if ($code == $unit->getCode()) {
+                if ($names->isEmpty()) {
+                    return;
+                }
+
+                $unit->setNames($names);
+                return;
+            }
+        }
+
+        $this->units->add(
+            (new PropertyUnit())
+                ->setCode($code)
+                ->setNames($names)
+        );
+    }
+
+    public function removeUnit(string $code): self
+    {
+        foreach ($this->units as $index => $unit) {
+            if ($code == $unit->getCode()) {
+                $this->units->remove($index);
+            }
+        }
+
         return $this;
     }
 

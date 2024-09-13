@@ -11,6 +11,7 @@ final readonly class ProductFeatureMessageDTO implements MessageDTOInterface
         /** @var ProductFeaturePrimaryKeyDTO $primaryKeys */
         #[Assert\NotBlank(groups: ['create', 'update', 'delete'])]
         #[Assert\Type(type: ProductFeaturePrimaryKeyDTO::class, groups: ['create', 'update', 'delete'])]
+        #[Assert\Valid(groups: ['create', 'update', 'delete'])]
         public mixed $primaryKeys,
 
         #[Assert\Type(type: 'string', message: 'Значение должно быть строкой', groups: ['create', 'update', 'delete'])]
