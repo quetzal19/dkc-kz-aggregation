@@ -53,6 +53,11 @@ class PropertyValue
         return $this;
     }
 
+    public function getCodeOrId(): ?string
+    {
+        return empty($this->code) ? $this->id : $this->code;
+    }
+
     /** @return Collection<int, PropertyName> */
     public function getNames(): Collection
     {
