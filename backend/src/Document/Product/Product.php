@@ -177,32 +177,47 @@ class Product
 
     public function setProperties(?string $feature = null, ?string $value = null, ?string $unit = null): Product
     {
-        $featureIsEmpty = empty($feature);
-        $valueIsEmpty = empty($value);
-        $unitIsEmpty = empty($unit);
+        $featureIsNull = is_null($feature);
+        $valueIsNull = is_null($value);
+        $unitIsNull = is_null($unit);
 
-        if ($featureIsEmpty || ($valueIsEmpty && $unitIsEmpty)) {
+        if ($featureIsNull || ($valueIsNull && $unitIsNull)) {
             return $this;
         }
 
         if (empty($this->property)) {
+            if (empty($value) && empty($unit)) {
+                return $this;
+            }
             $this->property[] = implode(':', [$feature, $value, $unit]);
             return $this;
         }
 
+        $isFoundFeature = false;
         foreach ($this->property as $index => $property) {
             [$featureCode, $valueCode, $unitCode] = explode(':', $property);
 
             if ($featureCode == $feature) {
-                $propertyString = implode(':', [
-                    $feature,
-                    $valueIsEmpty ? $valueCode : $value,
-                    $unitIsEmpty ? $unitCode : $unit
-                ]);
+                $value = $valueIsNull ? $valueCode : $value;
+                $unit = $unitIsNull ? $unitCode : $unit;
 
+                if (empty($value) && empty($unit)) {
+                    unset($this->property[$index]);
+                    return $this;
+                }
+
+                $propertyString = implode(':', [$feature, $value, $unit]);
                 $this->property[$index] = $propertyString;
+                $isFoundFeature = true;
                 break;
             }
+        }
+
+        if (!$isFoundFeature) {
+            if (empty($value) && empty($unit)) {
+                return $this;
+            }
+            $this->property[] = implode(':', [$feature, $value, $unit]);
         }
 
         return $this;

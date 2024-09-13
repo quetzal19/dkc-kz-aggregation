@@ -37,7 +37,7 @@ final class TestFillingQueueByFiles extends Command
             'number',
             InputArgument::OPTIONAL,
             'Number of messages to fill queue',
-            1
+            99_999_999_999
         );
         $this->addArgument(
             'entity',
@@ -48,6 +48,7 @@ final class TestFillingQueueByFiles extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        ini_set('memory_limit', '-1');
         $numberMessages = $input->getArgument('number');
         $entity = $input->getArgument('entity');
 
