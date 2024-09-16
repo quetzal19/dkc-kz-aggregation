@@ -17,7 +17,7 @@ abstract readonly class AbstractEntityHandlerStorage implements EntityHandlerSto
     ) {
     }
 
-    public function handle(StorageInterface $storage): void
+    public function handle(StorageInterface $storage): bool
     {
         $action = $storage->getAction();
 
@@ -29,19 +29,19 @@ abstract readonly class AbstractEntityHandlerStorage implements EntityHandlerSto
                 'Could not decode json: ' . $storage->getMessage() .
                 ' exception: ' . $e->getMessage()
             );
-            return;
+            return false;
         }
 
         if (!method_exists($this->actionService, $action)) {
             $this->logger->error("Method '$action' not found, in class " . get_class($this->actionService));
-            return;
+            return false;
         }
 
         $dto = $this->messageService->serializeToDTOAndValidate($message, [$action], $this->dtoClass, $this->entity);
         if (!$dto) {
-            return;
+            return false;
         }
 
-        $this->actionService->$action($dto);
+        return $this->actionService->$action($dto);
     }
 }

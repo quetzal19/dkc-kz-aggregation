@@ -6,7 +6,7 @@ use App\Helper\Interface\Message\MessageDTOInterface;
 
 interface ActionInterface
 {
-    public function create(MessageDTOInterface $dto): void;
-    public function update(MessageDTOInterface $dto): void;
-    public function delete(MessageDTOInterface $dto): void;
+    public function create(MessageDTOInterface $dto): bool;
+    public function update(MessageDTOInterface $dto): bool;
+    public function delete(MessageDTOInterface $dto): bool;
 }

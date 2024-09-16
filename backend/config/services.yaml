@@ -64,6 +64,9 @@ services:
     App\Features\Properties\PropertyFeatureMap\Serializer\Denormalizer\PropertyFeatureMapMessageDTODenormalizer:
         tags: [ 'serializer.normalizer' ]
 
+    App\Features\Properties\PropertyUnit\Serializer\Denormalizer\PropertyUnitMessageDTODenormalizer:
+        tags: [ 'serializer.normalizer' ]
+
     map.property.name.dto.denormalizer:
         class: 'App\Features\Properties\PropertyName\Serializer\Denormalizer\PropertyNameDTODenormalizer'
         tags: [ 'serializer.normalizer' ]

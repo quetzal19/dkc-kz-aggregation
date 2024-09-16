@@ -25,7 +25,7 @@ final readonly class SectionActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var SectionMessageDTO $dto */
         $section = $this->repository->findOneBy([
@@ -38,7 +38,7 @@ final readonly class SectionActionService implements ActionInterface
                 "On create section with code '$dto->code' and locale '$dto->locale' section already exists," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $newSection = $this->sectionMapper->mapFromMessageDTO($dto);
@@ -46,7 +46,7 @@ final readonly class SectionActionService implements ActionInterface
         try {
             $this->setParentId($newSection, $dto);
         } catch (Exception) {
-            return;
+            return false;
         }
 
         $this->documentManager->persist($newSection);
@@ -55,13 +55,14 @@ final readonly class SectionActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' created");
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var SectionMessageDTO $dto */
         $section = $this->repository->findOneBy([
@@ -74,7 +75,7 @@ final readonly class SectionActionService implements ActionInterface
                 "On update section with code '$dto->code' and locale '$dto->locale' section not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->sectionMapper->mapFromMessageDTO($dto, $section);
@@ -82,20 +83,21 @@ final readonly class SectionActionService implements ActionInterface
         try {
             $this->setParentId($section, $dto);
         } catch (Exception) {
-            return;
+            return false;
         }
 
         try {
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' updated");
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var SectionMessageDTO $dto */
         $section = $this->repository->findOneBy([
@@ -108,7 +110,7 @@ final readonly class SectionActionService implements ActionInterface
                 "On delete section with code '$dto->code' and locale '$dto->locale' section not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->documentManager->remove($section);
@@ -117,10 +119,11 @@ final readonly class SectionActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' deleted");
+        return true;
     }
 
     /**
