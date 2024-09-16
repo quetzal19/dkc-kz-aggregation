@@ -23,18 +23,16 @@ final readonly class PriorityService
     }
 
     /**
-     * @return TempStorage[]
      * @throws Exception
      */
-    public function getMaxPriorityData(PriorityFilter $priorityFilter): array
+    public function getMaxPriorityData(PriorityFilter $priorityFilter): \Iterator
     {
         $builder = $this->storageRepository->builderBasePipeline($priorityFilter);
 
         $result = $builder
             ->hydrate(TempStorage::class)
             ->getAggregation()
-            ->getIterator()
-            ->toArray();
+            ->getIterator();
 
         return $result;
     }
