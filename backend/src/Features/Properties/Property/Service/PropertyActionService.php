@@ -26,7 +26,7 @@ final readonly class PropertyActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var PropertyMessageDTO $dto */
         $property = $this->propertyRepository->findOneBy(['code' => $dto->code]);
@@ -36,7 +36,7 @@ final readonly class PropertyActionService implements ActionInterface
                 "On create property with code '$dto->code' property already exists," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $newProperty = $this->propertyMapper->mapFromMessageDTO($dto);
@@ -47,13 +47,15 @@ final readonly class PropertyActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Property with code '$dto->code' created");
+
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var PropertyMessageDTO $dto */
         $property = $this->propertyRepository->findOneBy(['code' => $dto->code]);
@@ -63,7 +65,7 @@ final readonly class PropertyActionService implements ActionInterface
                 "On update property with code '$dto->code' property not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->propertyMapper->mapFromMessageDTO($dto, $property);
@@ -72,13 +74,14 @@ final readonly class PropertyActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Property with code '$dto->code' updated");
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var PropertyMessageDTO $dto */
         $property = $this->propertyRepository->findOneBy(['code' => $dto->code]);
@@ -88,7 +91,7 @@ final readonly class PropertyActionService implements ActionInterface
                 "On delete property with code '$dto->code' property not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->documentManager->remove($property);
@@ -97,9 +100,10 @@ final readonly class PropertyActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Property with code '$dto->code' deleted");
+        return true;
     }
 }

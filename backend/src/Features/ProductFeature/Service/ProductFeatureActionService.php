@@ -27,54 +27,58 @@ final readonly class ProductFeatureActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var ProductFeatureMessageDTO $dto */
         if (!$this->setPropertiesProduct($dto, 'create')) {
-            return;
+            return false;
         }
 
         try {
             $this->documentManager->flush();
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info(
             "Product feature, product with code " . $dto->primaryKeys->productCode
             . " and property with code " . $dto->primaryKeys->featureCode . " created",
         );
+
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var ProductFeatureMessageDTO $dto */
         if (!$this->setPropertiesProduct($dto, 'update')) {
-            return;
+            return false;
         }
 
         try {
             $this->documentManager->flush();
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info(
             "Product feature, product with code " . $dto->primaryKeys->productCode
             . " and property with code " . $dto->primaryKeys->featureCode . " updated",
         );
+
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var ProductFeatureMessageDTO $dto */
         $property = $this->getProperty($dto, 'delete');
         $product = $this->getProduct($dto, 'delete');
 
         if (!$property || !$product) {
-            return;
+            return false;
         }
 
         $product->removePropertyByFeature($property->getCode());
@@ -83,13 +87,15 @@ final readonly class ProductFeatureActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info(
             "Product feature, product with code " . $dto->primaryKeys->productCode
             . " and property with code " . $dto->primaryKeys->featureCode . " deleted"
         );
+
+        return true;
     }
 
     private function setPropertiesProduct(ProductFeatureMessageDTO $dto, string $fromAction): bool

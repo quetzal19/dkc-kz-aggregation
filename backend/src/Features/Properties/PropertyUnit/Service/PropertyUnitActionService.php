@@ -20,46 +20,48 @@ final readonly class PropertyUnitActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var PropertyUnitMessageDTO $dto */
         if (!$this->createOrUpdatePropertyNames($dto, 'create')) {
-            return;
+            return false;
         }
 
         try {
             $this->documentManager->flush();
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("On create property unit, properties with code '$dto->code' created");
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var PropertyUnitMessageDTO $dto */
         if (!$this->createOrUpdatePropertyNames($dto, 'update')) {
-            return;
+            return false;
         }
 
         try {
             $this->documentManager->flush();
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("On update property unit, properties with code '$dto->code' updated");
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var PropertyUnitMessageDTO $dto */
         $properties = $this->getProperties($dto, 'delete');
         if (is_null($properties)) {
-            return;
+            return false;
         }
 
         foreach ($properties as $property) {
@@ -70,10 +72,11 @@ final readonly class PropertyUnitActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (\Exception $exception) {
             $this->logger->error($exception->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("On delete property unit, properties with code '$dto->code' deleted");
+        return true;
     }
 
     private function createOrUpdatePropertyNames(PropertyUnitMessageDTO $dto, string $fromAction): bool

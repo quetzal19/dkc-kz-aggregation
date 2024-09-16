@@ -21,11 +21,11 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var PropertyFeatureMapMessageDTO $dto */
         if (!$this->setPropertiesToProductAndProperty($dto, 'create')) {
-            return;
+            return false;
         }
 
         $this->logger->info(
@@ -33,13 +33,14 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             . " added to property with code " . $dto->primaryKeys->featureCode .
             " and to product with artClass" . $dto->primaryKeys->etimArtClassId,
         );
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var PropertyFeatureMapMessageDTO $dto */
         if (!$this->setPropertiesToProductAndProperty($dto, 'update')) {
-            return;
+            return false;
         }
 
         $this->logger->info(
@@ -47,19 +48,20 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             . " updated to property with code " . $dto->primaryKeys->featureCode .
             " and to product with artClass" . $dto->primaryKeys->etimArtClassId,
         );
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var PropertyFeatureMapMessageDTO $dto */
         $product = $this->getProduct($dto, 'delete');
         if (!$product) {
-            return;
+            return false;
         }
 
         $property = $this->getProperty($dto, 'delete');
         if (!$property) {
-            return;
+            return false;
         }
 
         $property->removeUnit($dto->unitCode);
@@ -70,7 +72,7 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info(
@@ -78,6 +80,7 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             . " removed from property with code " . $dto->primaryKeys->featureCode
             . " and to product with artClass" . $dto->primaryKeys->etimArtClassId,
         );
+        return true;
     }
 
     private function setPropertiesToProductAndProperty(MessageDTOInterface $dto, string $fromAction): bool

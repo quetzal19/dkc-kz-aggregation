@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Features\Properties\PropertyUnit\Handler\PropertyUnitHandlerStorage;
 use App\Features\Priority\{Builder\PriorityFilterBuilder, Service\PriorityService};
 use App\Helper\Locator\Storage\ServiceHandlerStorageLocator;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
@@ -42,8 +43,14 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 $this->documentManager->remove($storage);
                 continue;
             }
-            $handler->handle($storage);
-            $this->documentManager->remove($storage);
+
+            $isSuccessHandle = $handler->handle($storage);
+            $isHandlerUnit = $handler instanceof PropertyUnitHandlerStorage;
+            $isRemoveStorage = !$isHandlerUnit || $isSuccessHandle;
+
+            if ($isRemoveStorage) {
+                $this->documentManager->remove($storage);
+            }
         }
 
         try {

@@ -22,7 +22,7 @@ final readonly class PropertyValueActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var PropertyValueMessageDTO $dto */
         $propertyValue = $this->repository->findOneBy([
@@ -34,7 +34,7 @@ final readonly class PropertyValueActionService implements ActionInterface
                 "On create propertyValue with code '$dto->code' already exists,"
                 . " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $propertyValue = $this->propertyValueMapper->mapFromMessageDTO($dto);
@@ -48,9 +48,10 @@ final readonly class PropertyValueActionService implements ActionInterface
         }
 
         $this->logger->info("PropertyValue with code '$dto->code' created");
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var PropertyValueMessageDTO $dto */
         $propertyValue = $this->repository->findOneBy([
@@ -62,7 +63,7 @@ final readonly class PropertyValueActionService implements ActionInterface
                 "On update propertyValue with code '$dto->code' not found,"
                 . " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->propertyValueMapper->mapFromMessageDTO($dto, $propertyValue);
@@ -74,9 +75,10 @@ final readonly class PropertyValueActionService implements ActionInterface
         }
 
         $this->logger->info("PropertyValue with code '$dto->code' updated");
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var PropertyValueMessageDTO $dto */
         $propertyValue = $this->repository->findOneBy([
@@ -88,7 +90,7 @@ final readonly class PropertyValueActionService implements ActionInterface
                 "On delete propertyValue with code '$dto->code' not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->documentManager->remove($propertyValue);
@@ -100,5 +102,6 @@ final readonly class PropertyValueActionService implements ActionInterface
         }
 
         $this->logger->info("PropertyValue with code '$dto->code' deleted");
+        return true;
     }
 }

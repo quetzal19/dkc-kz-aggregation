@@ -27,7 +27,7 @@ final readonly class ProductActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): void
+    public function create(MessageDTOInterface $dto): bool
     {
         /** @var ProductMessageDTO $dto */
         $product = $this->productRepository->findOneBy([
@@ -40,7 +40,7 @@ final readonly class ProductActionService implements ActionInterface
                 "On create product with code '$dto->code' and locale '$dto->locale' product already exists," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $section = $this->sectionRepository->findOneBy([
@@ -52,7 +52,7 @@ final readonly class ProductActionService implements ActionInterface
                 "On create product, section with externalId '$dto->sectionId' not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $product = $this->productMapper->mapFromMessageDTO($dto);
@@ -65,13 +65,14 @@ final readonly class ProductActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Product with code '$dto->code' and locale '$dto->locale' created");
+        return true;
     }
 
-    public function update(MessageDTOInterface $dto): void
+    public function update(MessageDTOInterface $dto): bool
     {
         /** @var ProductMessageDTO $dto */
         $product = $this->productRepository->findOneBy([
@@ -84,7 +85,7 @@ final readonly class ProductActionService implements ActionInterface
                 "On update product with code '$dto->code' and locale '$dto->locale' product not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         if (!empty($dto->sectionId)) {
@@ -97,7 +98,7 @@ final readonly class ProductActionService implements ActionInterface
                     "On create product, section with externalId '$dto->sectionId' not found," .
                     " message: " . json_encode($dto)
                 );
-                return;
+                return false;
             }
         }
 
@@ -107,13 +108,15 @@ final readonly class ProductActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Product with code '$dto->code' and locale '$dto->locale' updated");
+
+        return true;
     }
 
-    public function delete(MessageDTOInterface $dto): void
+    public function delete(MessageDTOInterface $dto): bool
     {
         /** @var ProductMessageDTO $dto */
         $product = $this->productRepository->findOneBy([
@@ -126,7 +129,7 @@ final readonly class ProductActionService implements ActionInterface
                 "On delete product with code '$dto->code' and locale '$dto->locale' product not found," .
                 " message: " . json_encode($dto)
             );
-            return;
+            return false;
         }
 
         $this->documentManager->remove($product);
@@ -135,9 +138,11 @@ final readonly class ProductActionService implements ActionInterface
             $this->documentManager->flush();
         } catch (MongoDBException $e) {
             $this->logger->error($e->getMessage());
-            return;
+            return false;
         }
 
         $this->logger->info("Product with code '$dto->code' and locale '$dto->locale' deleted");
+
+        return true;
     }
 }
