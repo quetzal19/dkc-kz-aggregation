@@ -36,6 +36,7 @@ services:
                 etim_unit: '@App\Features\Properties\PropertyUnit\Handler\PropertyUnitHandlerStorage'
                 product_features: '@App\Features\ProductFeature\Handler\ProductFeatureHandlerStorage'
                 etim_art_class_feature_map: '@App\Features\Properties\PropertyFeatureMap\Handler\PropertyFeatureMapHandlerStorage'
+                facet_feature_section: '@App\Features\SectionFeature\Handler\SectionFeatureHandlerStorage'
 
     map.product.mapper:
         class: 'App\Features\Product\Mapper\ProductMapper'
@@ -65,6 +66,9 @@ services:
         tags: [ 'serializer.normalizer' ]
 
     App\Features\Properties\PropertyUnit\Serializer\Denormalizer\PropertyUnitMessageDTODenormalizer:
+        tags: [ 'serializer.normalizer' ]
+
+    App\Features\SectionFeature\Serializer\Denormalizer\SectionFeatureMessageDTODenormalizer:
         tags: [ 'serializer.normalizer' ]
 
     map.property.name.dto.denormalizer:

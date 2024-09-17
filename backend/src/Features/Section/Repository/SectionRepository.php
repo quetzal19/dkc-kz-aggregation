@@ -18,21 +18,25 @@ class SectionRepository extends ServiceDocumentRepository
      * @throws MappingException
      * @throws Exception
      */
-    public function findParentsByCode(string $code): array
+    public function findChildrenByCode(string $code, int $locale): array
     {
         $builder = $this->createAggregationBuilder();
-
         $builder
             ->match()
                 ->field('code')
                 ->equals($code)
-            ->graphLookup('Section')
-                ->startWith('$parentCode')
-                ->connectFromField('parentCode')
-                ->connectToField('code')
-                ->alias('ancestors')
-            ->unwind('$ancestors')
-            ->replaceWith('$ancestors');
+            ->graphLookup(Section::class)
+                ->startWith('$code')
+                ->connectFromField('code')
+                ->connectToField('parentCode')
+                ->alias('children')
+                ->maxDepth(10)
+                ->depthField('depth')
+            ->unwind('$children')
+            ->match()
+                ->field('children.locale')
+                ->equals($locale)
+            ->replaceRoot('$children');
 
         return $builder
             ->hydrate(Section::class)

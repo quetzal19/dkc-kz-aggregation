@@ -2,7 +2,7 @@
 
 namespace App\Document\Properties;
 
-use App\Document\Properties\{Name\PropertyName, Unit\PropertyUnit};
+use App\Document\Properties\{Name\PropertyName, SectionCode\SectionCode, Unit\PropertyUnit};
 use App\Features\Properties\Property\Repository\PropertyRepository;
 use Doctrine\Common\Collections\{ArrayCollection, Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
@@ -25,10 +25,15 @@ class Property
     #[MongoDB\EmbedMany(targetDocument: PropertyUnit::class)]
     private Collection $units;
 
+    /** @var Collection<int, SectionCode> $units */
+    #[MongoDB\EmbedMany(targetDocument: SectionCode::class)]
+    private Collection $sectionCodes;
+
     public function __construct()
     {
         $this->names = new ArrayCollection();
         $this->units = new ArrayCollection();
+        $this->sectionCodes = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -128,6 +133,42 @@ class Property
     public function setUnits(Collection $units): Property
     {
         $this->units = $units;
+        return $this;
+    }
+
+    public function addOrUpdateSectionCode(SectionCode $sectionCode): self
+    {
+        foreach ($this->sectionCodes as $section) {
+            if ($sectionCode->getSectionCode() == $section->getSectionCode()) {
+                $section->setSort($sectionCode->getSort());
+                return $this;
+            }
+        }
+
+        $this->sectionCodes->add($sectionCode);
+
+        return $this;
+    }
+
+    public function removeSectionCodeByCode(string $sectionCode): self
+    {
+        foreach ($this->sectionCodes as $index => $section) {
+            if ($sectionCode == $section->getSectionCode()) {
+                $this->sectionCodes->remove($index);
+                return $this;
+            }
+        }
+        return $this;
+    }
+
+    public function getSectionCodes(): Collection
+    {
+        return $this->sectionCodes;
+    }
+
+    public function setSectionCodes(Collection $sectionCodes): Property
+    {
+        $this->sectionCodes = $sectionCodes;
         return $this;
     }
 }
