@@ -140,4 +140,9 @@ class Section extends TreeNode
         $this->externalId = $externalId;
         return $this;
     }
+
+    public function getFullPath(): array
+    {
+        return array_filter([$this->path, $this->code]);
+    }
 }
