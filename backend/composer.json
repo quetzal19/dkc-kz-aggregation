@@ -19,7 +19,8 @@
         "symfony/runtime": "7.1.*",
         "symfony/serializer": "7.1.*",
         "symfony/validator": "7.1.*",
-        "symfony/yaml": "7.1.*"
+        "symfony/yaml": "7.1.*",
+      "ext-mongodb": "*"
     },
     "config": {
         "allow-plugins": {
