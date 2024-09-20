@@ -114,11 +114,18 @@ final readonly class ProductFeatureActionService implements ActionInterface
                 return false;
             }
         } elseif (!empty($dto->value)) {
-            $propertyValueDTO = PropertyValueMessageDTOBuilder::create()
-                ->initializeLocalesByValue($dto->value)
-                ->build();
+            $propertyValue = $this->propertyValueRepository->findOneBy([
+                'value' => $dto->valueCode,
+                'code' => null
+            ]);
 
-            $propertyValue = $this->propertyValueMapper->mapFromMessageDTO($propertyValueDTO);
+            if (!$propertyValue) {
+                $propertyValueDTO = PropertyValueMessageDTOBuilder::create()
+                    ->initializeLocalesByValue($dto->value)
+                    ->build();
+
+                $propertyValue = $this->propertyValueMapper->mapFromMessageDTO($propertyValueDTO);
+            }
         } else {
             $this->logger->error(
                 "On $fromAction product feature 'value' and 'valueCode' is empty, message: " . json_encode($dto),

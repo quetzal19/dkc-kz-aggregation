@@ -35,4 +35,17 @@ enum LocaleType: int
     {
         return array_keys(self::getNameLocaleTypes());
     }
+
+    public static function getDefaultLocaleName(): ?string
+    {
+        $defaultLocale = LocaleType::LOCALE_RU;
+        $localeTypes = self::getNameLocaleTypes();
+        $localName = array_search($defaultLocale, $localeTypes);
+
+        if (!$localName) {
+            return null;
+        }
+
+        return $localName;
+    }
 }
