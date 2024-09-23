@@ -9,7 +9,6 @@ final readonly class PropertyFilterValueDTO
         public string $valueCode,
         public string $valueName,
         public string $productCode,
-
     ) {
     }
 }

@@ -4,6 +4,7 @@ namespace App\Features\Properties\Property\Service;
 
 use App\Document\Properties\Property;
 use App\Document\Section\Section;
+use App\Features\Product\DTO\Property\ProductPropertyDTO;
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Properties\Property\DTO\Repository\{PropertyFilterDTO, PropertyFilterValueDTO};
 use App\Features\Properties\Property\DTO\Http\Response\{PropertyFilterItemResponseDTO,
@@ -45,7 +46,8 @@ final readonly class PropertyService
         }
 
         $filters = [];
-        if (!empty($propertyFilter->filters)) {
+        $filtersIsEmpty = empty($propertyFilter->filters);
+        if (!$filtersIsEmpty) {
             try {
                 $filters = json_decode($propertyFilter->filters, true, flags: JSON_THROW_ON_ERROR);
             } catch (\JsonException) {
@@ -59,6 +61,23 @@ final readonly class PropertyService
         $allSections = [$section, ...$childrenSections];
 
         $sectionCodes = array_map(fn(Section $section) => $section->getCode(), $allSections);
+
+        $productsProperties = [];
+        if (!$filtersIsEmpty) {
+            $groupedProducts = $this->productRepository->getProductFilters(
+                filters: $filters,
+                sectionCodes: $sectionCodes,
+                locale: $locale,
+            );
+
+            foreach ($groupedProducts as $groupedProduct) {
+                $productProperty = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
+
+                /** @var ProductPropertyDTO[] $productsProperties */
+                $productsProperties[$productProperty->featureCode][$productProperty->value] = $productProperty;
+            }
+        }
+
         $properties = $this->propertyRepository->findBySectionCodes($sectionCodes);
 
         $indexedPropertiesByCode = [];
@@ -67,18 +86,16 @@ final readonly class PropertyService
             $indexedPropertiesByCode[$property->getCode()] = $property;
             $propertiesValue[$property->getCode()] = [];
         }
+        $propertyCodes = array_keys($propertiesValue);
 
         $foundedProperties = $this->productRepository->getSortedProperties(
-            propertiesValue: $propertiesValue,
+            propertyCodes: $propertyCodes,
             sectionCodes: $sectionCodes,
-            sortValues: array_keys($propertiesValue),
             locale: $locale
         );
 
         $filters = [];
         $valueFilters = [];
-        $productFilters = [];
-        $totalCount = 0;
         foreach ($foundedProperties as $foundedProperty) {
             $propertyFilterDTO = $this->denormalizer->denormalize(
                 $foundedProperty,
@@ -102,15 +119,10 @@ final readonly class PropertyService
                 /** @var PropertyFilterValueDTO $propertyValue */
                 $propertyValue = $this->denormalizer->denormalize($propertyValue, PropertyFilterValueDTO::class);
 
-                $productFilters[$propertyValue->productCode] ??= [];
-                if (!in_array($propertyValue->valueCode, $productFilters[$propertyValue->productCode])) {
-                    $productFilters[$propertyValue->productCode][] = $propertyValue->valueCode;
-                }
-
                 if (array_key_exists($property->getCode(), $valueFilters) &&
                     array_key_exists($propertyValue->valueCode, $valueFilters[$property->getCode()])
                 ) {
-                    $valueFilters[$property->getCode()][$propertyValue->valueCode]->incrementCount();
+                    $value = $valueFilters[$property->getCode()][$propertyValue->valueCode];
                 } else {
                     $unit = $property->getUnitNameByCodeAndLocale($propertyValue->unitCode, $localeInt);
 
@@ -121,17 +133,16 @@ final readonly class PropertyService
 
                     $valueFilters[$property->getCode()][$propertyValue->valueCode] = $value;
 
-                    $filter->addValue($value->incrementCount());
+                    $filter->addValue($value);
                 }
             }
 
             $filters[] = $filter;
-            $totalCount += $filter->getCount();
         }
 
         return new PropertyFilterResponseDTO(
             filters: $filters,
-            count: $totalCount
+            count: 0
         );
     }
 }

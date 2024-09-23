@@ -56,6 +56,11 @@ final class PropertyFilterItemValueResponseDTO
         return $this->enabled;
     }
 
+    public function setEnabledFromBoolean(bool $enabled): PropertyFilterItemValueResponseDTO
+    {
+        return $this->setEnabled($enabled ? 'true' : 'false');
+    }
+
     public function setEnabled(string $enabled): PropertyFilterItemValueResponseDTO
     {
         $this->enabled = $enabled;

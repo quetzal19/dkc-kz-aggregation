@@ -2,6 +2,7 @@
 
 namespace App\Features\Product\Repository;
 
+use Doctrine\ODM\MongoDB\Aggregation\Builder;
 use App\Document\{Product\Product, Properties\PropertyValue, Section\Section};
 use Doctrine\Bundle\MongoDBBundle\{ManagerRegistry, Repository\ServiceDocumentRepository};
 
@@ -12,15 +13,12 @@ class ProductRepository extends ServiceDocumentRepository
         parent::__construct($registry, Product::class);
     }
 
-    public function getSortedProperties(
-        array $propertiesValue,
+    public function buildBasePipeline(
+        array $propertyCodes,
         array $sectionCodes,
-        array $sortValues,
-        string $locale
-    ): \Iterator {
+        string $locale,
+    ): Builder {
         $builder = $this->createAggregationBuilder();
-
-        $propertiesCode = array_keys($propertiesValue);
 
 //        $builder
 //            ->lookup(Section::class)
@@ -44,7 +42,7 @@ class ProductRepository extends ServiceDocumentRepository
             ->filter(
                 '$property',
                 'property',
-                $builder->expr()->regexMatch('$$property', implode('|', $propertiesCode))
+                $builder->expr()->regexMatch('$$property', implode('|', $propertyCodes))
             );
 
         $builder
@@ -113,26 +111,6 @@ class ProductRepository extends ServiceDocumentRepository
             ->filter('$propertyValue.names', 'name', $builder->expr()->eq('$$name.locale', $locale))
             ->unwind('$filteredName');
 
-//        $orConditions = [];
-//        foreach ($propertiesValue as $property => $values) {
-//            if (!empty($values) && is_array($values)) {
-//                foreach ($values as $value) {
-//                    $orConditions[] = [
-//                        '$and' => [
-//                            ['featureCode' => $property],
-//                            ['valueCode' => $value]
-//                        ]
-//                    ];
-//                }
-//            }
-//        }
-
-//        if (!empty($orConditions)) {
-//            $builder->match()->addAnd(
-//                ['$or' => $orConditions]
-//            );
-//        }
-
         $builder
             ->group()
             ->field('_id')
@@ -157,14 +135,70 @@ class ProductRepository extends ServiceDocumentRepository
                 'productCode' => '$_id.productCode',
             ]);
 
+
+        return $builder;
+    }
+
+    public function getSortedProperties(
+        array $propertyCodes,
+        array $sectionCodes,
+        string $locale
+    ): \Iterator {
+        $builder = $this->buildBasePipeline($propertyCodes, $sectionCodes, $locale);
+
         $builder
             ->addFields()
             ->field('index')
             ->expression([
-                '$indexOfArray' => [$sortValues, '$_id']
+                '$indexOfArray' => [$propertyCodes, '$_id']
             ]);
 
         $builder->sort('index', 1);
+
+        return $builder->getAggregation()->getIterator();
+    }
+
+    public function getProductFilters(
+        array $filters,
+        array $sectionCodes,
+        string $locale,
+    ): \Iterator {
+        $builder = $this->buildBasePipeline(array_keys($filters), $sectionCodes, $locale);
+
+        $builder
+            ->addFields()
+            ->field('values')
+            ->expression('$values.valueCode')
+            ->field('productCode')
+            ->expression('$values.productCode');
+
+        $builder
+            ->unwind('$values');
+
+        $builder
+            ->group()
+            ->field('_id')
+            ->expression([
+                'value' => '$values',
+                'featureCode' => '$_id',
+                'productCodes' => '$productCode',
+            ])
+            ->field('productCount')
+            ->sum(1);
+
+        $match = $builder->match();
+        foreach ($filters as $property => $values) {
+            if (is_array($values)) {
+                foreach ($values as $value) {
+                    $match->addOr([
+                        '$and' => [
+                            ['_id.featureCode' => $property],
+                            ['_id.value' => $value]
+                        ]
+                    ]);
+                }
+            }
+        }
 
         return $builder->getAggregation()->getIterator();
     }
