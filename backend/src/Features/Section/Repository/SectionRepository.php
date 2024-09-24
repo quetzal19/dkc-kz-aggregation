@@ -13,7 +13,7 @@ class SectionRepository extends ServiceDocumentRepository
         parent::__construct($registry, Section::class);
     }
 
-    public function findChildrenByCode(array $path, int $locale): array
+    public function findChildrenByFullPath(array $path, int $locale): array
     {
         return $this->findBy([
             'path' => new Regex(

@@ -3,3 +3,10 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+apiV1:
+    resource:
+        path:  '../src/Controller/Api/v1'
+        namespace: App\Controller\Api\v1
+    type: attribute
+    prefix: /api/v1
+    trailing_slash_on_root: false

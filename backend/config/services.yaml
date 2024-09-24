@@ -74,3 +74,11 @@ services:
     map.property.name.dto.denormalizer:
         class: 'App\Features\Properties\PropertyName\Serializer\Denormalizer\PropertyNameDTODenormalizer'
         tags: [ 'serializer.normalizer' ]
+
+    App\Helper\Event\EventListener\CustomPayloadValueResolver:
+        tags:
+            - { name: kernel.event_listener, event: kernel.controller_arguments, method: onKernelControllerArguments }
+
+    App\Helper\Event\EventListener\ExceptionListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception, method: onKernelException }

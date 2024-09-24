@@ -58,6 +58,16 @@ class Property
         return $this;
     }
 
+    public function getNameByLocale(string $locale): ?string
+    {
+        $propertyName = $this->names->filter(fn(PropertyName $name) => $name->getLocale() == $locale)->first();
+        if (!$propertyName) {
+            return null;
+        }
+
+        return $propertyName->getName();
+    }
+
     /** @return Collection<int, PropertyName> */
     public function getNames(): Collection
     {
@@ -80,6 +90,33 @@ class Property
     public function getUnits(): Collection
     {
         return $this->units;
+    }
+
+    public function getUnitByCode(string $code): ?PropertyUnit
+    {
+        $unit = $this->units->filter(fn(PropertyUnit $unit) => $unit->getCode() == $code)->first();
+        if (!$unit) {
+            return null;
+        }
+        return $unit;
+    }
+
+    public function getUnitNameByCodeAndLocale(string $code, string $locale): ?string
+    {
+        $propertyUnit = $this->getUnitByCode($code);
+        if (!$propertyUnit) {
+            return null;
+        }
+
+        $propertyName = $propertyUnit
+            ->getNames()
+            ->filter(fn(PropertyName $propertyName) => $propertyName->getLocale() == $locale)
+            ->first();
+
+        if (!$propertyName) {
+            return null;
+        }
+        return $propertyName->getName();
     }
 
     public function addUnit(PropertyUnit $unit): Property

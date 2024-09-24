@@ -14,6 +14,7 @@ class PropertyRepository extends ServiceDocumentRepository
     }
 
     /**
+     * @return Property[]
      * @throws \Exception
      */
     public function findBySectionCodes(array $codes): array
@@ -23,11 +24,12 @@ class PropertyRepository extends ServiceDocumentRepository
         $builder
             ->unwind('$sectionCodes')
             ->match()
-                ->field('sectionCodes.sectionCode')
-                ->in($codes)
+            ->field('sectionCodes.sectionCode')
+            ->in($codes)
             ->sort('sectionCodes.sort', SortType::DESC->value);
 
         return $builder
+            ->hydrate(Property::class)
             ->getAggregation()
             ->getIterator()
             ->toArray();
