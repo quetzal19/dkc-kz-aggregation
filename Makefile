@@ -36,8 +36,14 @@ down: ## Остановка всех контейнеров проекта
 bash-php: ## Зайти в bash контейнера с php
 	docker compose -f docker/docker-compose.$(ENV).yml exec php-fpm /bin/bash
 
-bash-mongo: ## Зайти в bash контейнера с mongodb
+bash-mongo: ## Зайти в bash контейнера с mongodb (локальная копия)
 	docker compose -f docker/docker-compose.$(ENV).yml exec mongodb sh
 
-bash-rabbit: ## Зайти в bash контейнера с mongodb
+cron-down:
+	docker compose -f docker/docker-compose.$(ENV).yml down cron
+
+cron-up:
+	docker compose -f docker/docker-compose.$(ENV).yml up -d cron
+
+bash-rabbit: ## Зайти в bash контейнера с RabbitMq
 	docker compose -f docker/docker-compose.$(ENV).yml exec rabbit sh
