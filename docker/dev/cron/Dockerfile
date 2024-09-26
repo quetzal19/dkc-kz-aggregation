@@ -6,7 +6,7 @@ ARG GID
 RUN apt-get update && apt-get install -y libzip-dev procps vim cron
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-RUN install-php-extensions gd imagick intl mysqli opcache pdo pdo_mysql zip
+RUN install-php-extensions amqp bcmath intl mongodb opcache zip
 
 RUN groupmod -o -g ${GID} www-data && usermod -o -u ${UID} -g www-data www-data
 
