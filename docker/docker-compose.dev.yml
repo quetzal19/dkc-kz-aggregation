@@ -30,7 +30,8 @@ services:
     volumes:
       - ../backend:/var/www/backend
       - ../crontab:/var/crontab/www-data
-      - ./dev/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./dev/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+      - ./dev/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     networks:
       dkc-kz:
         ipv4_address: 172.24.204.6
