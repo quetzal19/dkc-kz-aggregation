@@ -12,8 +12,8 @@ services:
       - ../backend:/var/www/backend
       - ./dev/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
       - ./dev/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
-    #depends_on:
-    #  - mongodb
+    depends_on:
+      - mongodb
     restart: unless-stopped
     networks:
       dkc-kz:
@@ -26,6 +26,8 @@ services:
       args:
         UID: ${UID}
         GID: ${GID}
+    depends_on:
+      - mongodb
     restart: unless-stopped
     volumes:
       - ../backend:/var/www/backend
@@ -36,28 +38,26 @@ services:
       dkc-kz:
         ipv4_address: 172.24.204.6
 
- #mongodb:
- #  container_name: dkc-kz-agg-mongo
- #  image: mongo:4.4
- #  environment:
- #    MONGO_INITDB_DATABASE: ${DB_NAME}
- #  ports:
- #    - '27017:27017'
- #  volumes:
- #    - ./dev/mongo/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
- #    - ./dev/mongo/data/db/:/data/db/
- #    - ./dev/mongo/data/log/:/var/log/mongodb/
- #    - ./dev/mongo/backup/:/backup/
- #  networks:
- #    dkc-kz:
- #      ipv4_address: 172.24.204.7
+  mongodb:
+    container_name: dkc-kz-agg-mongo
+    image: mongo:4.4
+    environment:
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+    volumes:
+      - ./dev/mongo/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./dev/mongo/data/db/:/data/db/
+      - ./dev/mongo/data/log/:/var/log/mongodb/
+      - ./dev/mongo/backup/:/backup/
+    networks:
+      dkc-kz:
+        ipv4_address: 172.24.204.7
 
   rabbit:
     container_name: dkc-kz-agg-rabbit
     image: rabbitmq:3.13-management
     environment:
-        RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-        RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     volumes:
       - ./dev/rabbitmq/data/:/var/lib/rabbitmq/
       - ./dev/rabbitmq/log/:/var/log/rabbitmq
