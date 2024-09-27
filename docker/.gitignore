@@ -3,3 +3,9 @@ local/mongo/data/log/
 local/nginx/logs/
 local/rabbitmq/log/
 local/rabbitmq/data/
+
+dev/rabbitmq/log/
+dev/rabbitmq/data/
+dev/mongo/data/db/
+dev/mongo/data/log/
+dev/nginx/logs/
