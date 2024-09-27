@@ -6,8 +6,7 @@ use App\Document\Category\Name\CategoryName;
 use App\Document\Product\Product;
 use App\Document\Section\Section;
 use App\Features\Analog\Repository\AnalogRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\{Collections\ArrayCollection, Collections\Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
 #[MongoDB\Document(repositoryClass: AnalogRepository::class)]
@@ -21,7 +20,7 @@ class Analog
         private string $externalId,
 
         #[MongoDB\ReferenceOne(targetDocument: Product::class)]
-        private ?Product $element = null,
+        private Product $element,
 
         #[MongoDB\ReferenceOne(targetDocument: Product::class)]
         private ?Product $analog = null,
@@ -56,12 +55,12 @@ class Analog
         return $this;
     }
 
-    public function getElement(): ?Product
+    public function getElement(): Product
     {
         return $this->element;
     }
 
-    public function setElement(?Product $element): Analog
+    public function setElement(Product $element): Analog
     {
         $this->element = $element;
         return $this;
