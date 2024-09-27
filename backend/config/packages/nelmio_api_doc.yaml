@@ -1,0 +1,52 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: My App
+            description: This is an awesome app!
+            version: 1.0.0
+        components:
+            schemas:
+                ApiExternalError:
+                    type: object
+                    properties:
+                        status:
+                            type: integer
+                            description: HTTP код ответа сервера
+                        message:
+                            type: string
+                            description: Сообщение об ошибке
+                        detail:
+                            type: string
+                            description: Подробное описание ошибки
+                        validationError:
+                            type: object
+                            properties:
+                                query:
+                                    type: array
+                                    description: Параметры из query
+                                    items:
+                                        type: object
+                                        properties:
+                                            name:
+                                                type: string
+                                                description: Название отправленного параметра
+                                            message:
+                                                type: string
+                                                description: Текст ошибки валидации по этому параметру
+                                body:
+                                    type: array
+                                    description: Параметры из body
+                                    items:
+                                        type: object
+                                        properties:
+                                            name:
+                                                type: string
+                                                description: Название отправленного параметра
+                                            message:
+                                                type: string
+                                                description: Текст ошибки валидации по этому параметру
+
+    areas: # to filter documented areas
+        disable_default_routes: true
+        path_patterns:
+            - ^/api(?!/doc$) # Accepts routes under /api except /api/doc

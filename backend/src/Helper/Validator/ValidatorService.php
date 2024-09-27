@@ -2,10 +2,11 @@
 
 namespace App\Helper\Validator;
 
-use App\Helper\{Enum\LocaleType, Exception\ApiException};
+use App\Helper\{Common\IntegerHelper, Enum\LocaleType, Exception\ApiException};
 use Symfony\Component\Validator\{Constraints\NotNull,
     ConstraintViolation,
     ConstraintViolationListInterface,
+    Context\ExecutionContextInterface,
     Validator\ValidatorInterface
 };
 use Symfony\Component\HttpFoundation\Response;
@@ -50,6 +51,45 @@ final readonly class ValidatorService
             );
         }
     }
+
+    public static function validatePage($object, ExecutionContextInterface $context): void
+    {
+        if (is_numeric($object)) {
+            if ($object <= 0) {
+                $context->addViolation("Значение $object должно быть от 1");
+            }
+        } else {
+            $context->addViolation("Некорректное значение, должно быть числом");
+        }
+    }
+
+    public static function validateLimit($object, ExecutionContextInterface $context): void
+    {
+        if (is_numeric($object)) {
+            if ($object <= 0 || $object > 100) {
+                $context->addViolation("Значение $object должно быть от 1 до 100");
+            }
+        } else {
+            $context->addViolation("Некорректное значение, должно быть числом");
+        }
+    }
+
+    public static function validateInteger($object, ExecutionContextInterface $context): void
+    {
+        if (is_numeric($object)) {
+            if ($object >= IntegerHelper::MAX_SIZE_INTEGER) {
+                $context->buildViolation(
+                    "Значение $object больше максимально допустимого значения integer."
+                )->addViolation();
+            }
+            if ($object <= IntegerHelper::MIN_SIZE_INTEGER) {
+                $context->buildViolation(
+                    "Значение $object меньше минимально допустимого значения integer."
+                )->addViolation();
+            }
+        }
+    }
+
 
     public function validateLocale(?string $locale): void
     {

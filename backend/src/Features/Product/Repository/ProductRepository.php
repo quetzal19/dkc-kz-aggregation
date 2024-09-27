@@ -2,6 +2,7 @@
 
 namespace App\Features\Product\Repository;
 
+use App\Helper\Enum\LocaleType;
 use Doctrine\ODM\MongoDB\Aggregation\Builder;
 use App\Document\{Product\Product, Properties\PropertyValue, Section\Section};
 use Doctrine\Bundle\MongoDBBundle\{ManagerRegistry, Repository\ServiceDocumentRepository};
@@ -13,6 +14,38 @@ class ProductRepository extends ServiceDocumentRepository
         parent::__construct($registry, Product::class);
     }
 
+    public function findActiveBySectionCodes(array $sectionCodes, string $locale): array
+    {
+        $builder = $this->createAggregationBuilder();
+
+        $builder
+            ->lookup(Section::class)
+            ->localField('section.$id')
+            ->foreignField('_id')
+            ->alias('section');
+
+        $builder->unwind('$section');
+
+        $builder
+            ->match()
+                ->field('section.code')
+                    ->in($sectionCodes)
+                ->field('active')
+                    ->equals(true)
+                ->field('locale')
+                    ->equals(LocaleType::fromString($locale)->value);
+
+        $builder
+            ->project()
+                ->excludeFields(['_id'])
+                ->includeFields(['code'])
+            ->group()
+                ->field('_id')
+                ->expression('$code');
+
+        return $builder->getAggregation()->getIterator()->toArray();
+    }
+
     public function buildBasePipeline(
         array $propertyCodes,
         array $sectionCodes,
@@ -20,18 +53,18 @@ class ProductRepository extends ServiceDocumentRepository
     ): Builder {
         $builder = $this->createAggregationBuilder();
 
-//        $builder
-//            ->lookup(Section::class)
-//            ->localField('section.$id')
-//            ->foreignField('_id')
-//            ->alias('section');
-//
-//        $builder->unwind('$section');
-//
-//        $builder
-//            ->match()
-//            ->field('section.code')
-//            ->in($sectionCodes);
+        $builder
+            ->lookup(Section::class)
+            ->localField('section.$id')
+            ->foreignField('_id')
+            ->alias('section');
+
+        $builder->unwind('$section');
+
+        $builder
+            ->match()
+            ->field('section.code')
+            ->in($sectionCodes);
 
         $builder
             ->project()
