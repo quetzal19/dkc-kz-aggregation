@@ -8,3 +8,4 @@ dev/rabbitmq/log/
 dev/rabbitmq/data/
 dev/mongo/data/db/
 dev/mongo/data/log/
+dev/nginx/logs/
