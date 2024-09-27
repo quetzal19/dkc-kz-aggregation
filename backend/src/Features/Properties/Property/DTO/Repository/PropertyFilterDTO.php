@@ -6,8 +6,9 @@ final readonly class PropertyFilterDTO
 {
     /** @param PropertyFilterValueDTO[] $values */
     public function __construct(
-        public string $_id,
-        public int $count,
+        public string $featureCode,
+        public string $valueCode,
+        public string $valueName,
         public array $values,
     ) {
     }

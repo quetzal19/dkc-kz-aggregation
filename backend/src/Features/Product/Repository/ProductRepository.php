@@ -28,20 +28,20 @@ class ProductRepository extends ServiceDocumentRepository
 
         $builder
             ->match()
-                ->field('section.code')
-                    ->in($sectionCodes)
-                ->field('active')
-                    ->equals(true)
-                ->field('locale')
-                    ->equals(LocaleType::fromString($locale)->value);
+            ->field('section.code')
+            ->in($sectionCodes)
+            ->field('active')
+            ->equals(true)
+            ->field('locale')
+            ->equals(LocaleType::fromString($locale)->value);
 
         $builder
             ->project()
-                ->excludeFields(['_id'])
-                ->includeFields(['code'])
+            ->excludeFields(['_id'])
+            ->includeFields(['code'])
             ->group()
-                ->field('_id')
-                ->expression('$code');
+            ->field('_id')
+            ->expression('$code');
 
         return $builder->getAggregation()->getIterator()->toArray();
     }
@@ -49,7 +49,6 @@ class ProductRepository extends ServiceDocumentRepository
     public function buildBasePipeline(
         array $propertyCodes,
         array $sectionCodes,
-        string $locale,
     ): Builder {
         $builder = $this->createAggregationBuilder();
 
@@ -120,6 +119,16 @@ class ProductRepository extends ServiceDocumentRepository
             ->field('length')
             ->gt(0);
 
+        return $builder;
+    }
+
+    public function getSortedProperties(
+        array $propertyCodes,
+        array $sectionCodes,
+        string $locale
+    ): \Iterator {
+        $builder = $this->buildBasePipeline($propertyCodes, $sectionCodes);
+
         $builder
             ->lookup(PropertyValue::class)
             ->let(['valueCode' => '$valueCode'])
@@ -149,35 +158,14 @@ class ProductRepository extends ServiceDocumentRepository
             ->field('_id')
             ->expression([
                 'featureCode' => '$featureCode',
-                'valueCode' => '$valueCode',
-                'unitCode' => '$unitCode',
                 'valueName' => '$filteredName.name',
-                "productCode" => '$productCode',
+                'valueCode' => '$valueCode',
             ])
-            ->field('count')
-            ->sum(1);
-
-        $builder
-            ->group()
-            ->field('_id')->expression('$_id.featureCode')
-            ->field('count')->sum('$count')
-            ->field('values')->push([
+            ->field('values')
+            ->push([
                 'unitCode' => '$_id.unitCode',
-                'valueCode' => '$_id.valueCode',
-                'valueName' => '$_id.valueName',
                 'productCode' => '$_id.productCode',
             ]);
-
-
-        return $builder;
-    }
-
-    public function getSortedProperties(
-        array $propertyCodes,
-        array $sectionCodes,
-        string $locale
-    ): \Iterator {
-        $builder = $this->buildBasePipeline($propertyCodes, $sectionCodes, $locale);
 
         $builder
             ->addFields()
@@ -188,36 +176,43 @@ class ProductRepository extends ServiceDocumentRepository
 
         $builder->sort('index', 1);
 
+        $builder
+            ->project()
+            ->field('_id')
+            ->expression([
+                'featureCode' => '$_id.featureCode',
+                'valueCode' => '$_id.valueCode',
+                'valueName' => '$_id.valueName',
+                'values' => '$values',
+            ]);
+
         return $builder->getAggregation()->getIterator();
     }
 
     public function getProductFilters(
         array $filters,
         array $sectionCodes,
-        string $locale,
     ): \Iterator {
-        $builder = $this->buildBasePipeline(array_keys($filters), $sectionCodes, $locale);
-
-        $builder
-            ->addFields()
-            ->field('values')
-            ->expression('$values.valueCode')
-            ->field('productCode')
-            ->expression('$values.productCode');
-
-        $builder
-            ->unwind('$values');
+        $builder = $this->buildBasePipeline(array_keys($filters), $sectionCodes);
 
         $builder
             ->group()
             ->field('_id')
             ->expression([
-                'value' => '$values',
-                'featureCode' => '$_id',
-                'productCodes' => '$productCode',
+                'featureCode' => '$featureCode',
+                'valueCode' => '$valueCode',
             ])
-            ->field('productCount')
-            ->sum(1);
+            ->field('products')
+            ->push('$productCode');
+
+        $builder
+            ->project()
+            ->field('_id')
+            ->expression([
+                'featureCode' => '$_id.featureCode',
+                'valueCode' => '$_id.valueCode',
+                'products' => '$products',
+            ]);
 
         $match = $builder->match();
         foreach ($filters as $property => $values) {
@@ -226,7 +221,7 @@ class ProductRepository extends ServiceDocumentRepository
                     $match->addOr([
                         '$and' => [
                             ['_id.featureCode' => $property],
-                            ['_id.value' => $value]
+                            ['_id.valueCode' => $value]
                         ]
                     ]);
                 }

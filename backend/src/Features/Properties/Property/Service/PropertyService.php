@@ -67,29 +67,27 @@ final readonly class PropertyService
             $groupedProducts = $this->productRepository->getProductFilters(
                 filters: $filters,
                 sectionCodes: $sectionCodes,
-                locale: $locale,
             );
 
             foreach ($groupedProducts as $groupedProduct) {
                 $productProperty = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
 
                 /** @var ProductPropertyDTO[] $productsProperties */
-                $productsProperties[$productProperty->featureCode][$productProperty->value] = $productProperty;
+                $productsProperties[$productProperty->featureCode][$productProperty->valueCode] = $productProperty->products;
             }
         }
 
         $properties = $this->propertyRepository->findBySectionCodes($sectionCodes);
 
         $indexedPropertiesByCode = [];
-        $propertiesValue = [];
+        $propertiesCodes = [];
         foreach ($properties as $property) {
             $indexedPropertiesByCode[$property->getCode()] = $property;
-            $propertiesValue[$property->getCode()] = [];
+            $propertiesCodes[] = $property->getCode();
         }
-        $propertyCodes = array_keys($propertiesValue);
 
         $foundedProperties = $this->productRepository->getSortedProperties(
-            propertyCodes: $propertyCodes,
+            propertyCodes: $propertiesCodes,
             sectionCodes: $sectionCodes,
             locale: $locale
         );
@@ -98,7 +96,7 @@ final readonly class PropertyService
         $valueFilters = [];
         foreach ($foundedProperties as $foundedProperty) {
             $propertyFilterDTO = $this->denormalizer->denormalize(
-                $foundedProperty,
+                $foundedProperty['_id'],
                 PropertyFilterDTO::class,
             );
 
@@ -107,7 +105,7 @@ final readonly class PropertyService
             }
 
             /** @var Property $property */
-            $property = $indexedPropertiesByCode[$propertyFilterDTO->_id];
+            $property = $indexedPropertiesByCode[$propertyFilterDTO->featureCode];
 
             $filter = new PropertyFilterItemResponseDTO(
                 code: $property->getCode(),
@@ -119,22 +117,31 @@ final readonly class PropertyService
                 /** @var PropertyFilterValueDTO $propertyValue */
                 $propertyValue = $this->denormalizer->denormalize($propertyValue, PropertyFilterValueDTO::class);
 
-                if (array_key_exists($property->getCode(), $valueFilters) &&
-                    array_key_exists($propertyValue->valueCode, $valueFilters[$property->getCode()])
+                $unit = $property->getUnitNameByCodeAndLocale($propertyValue->unitCode, $localeInt);
+
+                // TODO посомтреть что не так с unit
+                $value = new PropertyFilterItemValueResponseDTO(
+                    code: $propertyFilterDTO->valueCode,
+                    name: $propertyFilterDTO->valueCode . ($unit ? " $unit" : ''),
+                );
+
+                if (!$filtersIsEmpty
+                    && array_key_exists($propertyFilterDTO->featureCode, $productsProperties) &&
+                    array_key_exists(
+                        $propertyFilterDTO->valueCode,
+                        $productsProperties[$propertyFilterDTO->featureCode]
+                    ) &&
+                    in_array(
+                        $propertyValue->productCode,
+                        $productsProperties[$propertyFilterDTO->featureCode][$propertyFilterDTO->valueCode]
+                    )
                 ) {
-                    $value = $valueFilters[$property->getCode()][$propertyValue->valueCode];
-                } else {
-                    $unit = $property->getUnitNameByCodeAndLocale($propertyValue->unitCode, $localeInt);
-
-                    $value = new PropertyFilterItemValueResponseDTO(
-                        code: $propertyValue->valueCode,
-                        name: $propertyValue->valueName . ($unit ? " $unit" : ''),
-                    );
-
-                    $valueFilters[$property->getCode()][$propertyValue->valueCode] = $value;
-
-                    $filter->addValue($value);
+                    $value;
                 }
+
+                $valueFilters[$propertyFilterDTO->featureCode][$propertyFilterDTO->valueCode] = $value;
+
+                $filter->addValue($value);
             }
 
             $filters[] = $filter;

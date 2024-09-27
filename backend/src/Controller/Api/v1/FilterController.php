@@ -20,7 +20,6 @@ final class FilterController extends AbstractController
     ): JsonResponse {
         $locale = $request->getLocale();
 
-
         return $this->json($propertyService->getFilters($filter, $locale));
     }
 }
