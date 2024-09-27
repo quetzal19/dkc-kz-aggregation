@@ -3,3 +3,23 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+apiV1:
+    resource:
+        path:  '../src/Controller/Api/v1'
+        namespace: App\Controller\Api\v1
+    type: attribute
+    prefix: /api/v1
+    trailing_slash_on_root: false
+
+app.swagger_ui:
+    path: /api/v1/doc
+    methods: GET
+    defaults: { _controller: nelmio_api_doc.controller.swagger_ui }
+
+app.swagger:
+    path: /api/v1/doc.json
+    methods: GET
+    defaults: { _controller: nelmio_api_doc.controller.swagger }
+
+

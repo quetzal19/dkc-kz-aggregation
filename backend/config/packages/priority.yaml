@@ -1,0 +1,17 @@
+parameters:
+  app.action_priorities:
+    delete: 1
+    update: 2
+    create: 3
+
+  app.entity_priorities:
+    b_iblock_section: 10
+    b_iblock_element: 9
+    etim_value: 7
+    etim_feature: 8
+    product_features: 6
+    etim_art_class_feature_map: 5
+    etim_unit: 4
+    facet_feature_section: 3
+    hl_analogs: 2
+    hl_accessories: 1

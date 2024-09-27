@@ -7,13 +7,25 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-mongodb": "*",
         "doctrine/mongodb-odm-bundle": "^5.0",
+        "nelmio/api-doc-bundle": "^4.31",
+        "symfony/amqp-messenger": "7.1.*",
+        "symfony/asset": "7.1.*",
         "symfony/console": "7.1.*",
         "symfony/dotenv": "7.1.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.1.*",
+        "symfony/messenger": "7.1.*",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/property-access": "7.1.*",
         "symfony/runtime": "7.1.*",
-        "symfony/yaml": "7.1.*"
+        "symfony/serializer": "7.1.*",
+        "symfony/twig-bundle": "7.1.*",
+        "symfony/validator": "7.1.*",
+        "symfony/yaml": "7.1.*",
+        "twig/extra-bundle": "^2.12|^3.0",
+        "twig/twig": "^2.12|^3.0"
     },
     "config": {
         "allow-plugins": {
@@ -63,5 +75,9 @@
             "allow-contrib": false,
             "require": "7.1.*"
         }
+    },
+    "require-dev": {
+        "symfony/stopwatch": "7.1.*",
+        "symfony/web-profiler-bundle": "7.1.*"
     }
 }
