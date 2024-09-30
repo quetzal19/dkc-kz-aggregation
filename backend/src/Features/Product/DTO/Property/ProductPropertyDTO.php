@@ -7,7 +7,7 @@ final readonly class ProductPropertyDTO
     public function __construct(
         public string $featureCode,
         public string $valueCode,
-        /** @var string[] $productCodes */
+        /** @var string[] $products */
         public array $products,
     ) {
     }

@@ -6,7 +6,7 @@ use App\Document\Properties\Property;
 use App\Document\Section\Section;
 use App\Features\Product\DTO\Property\ProductPropertyDTO;
 use App\Features\Product\Repository\ProductRepository;
-use App\Features\Properties\Property\DTO\Repository\{PropertyFilterDTO, PropertyFilterValueDTO};
+use App\Features\Properties\Property\DTO\Repository\PropertyFilterDTO;
 use App\Features\Properties\Property\DTO\Http\Response\{PropertyFilterItemResponseDTO,
     PropertyFilterItemValueResponseDTO,
     PropertyFilterResponseDTO
@@ -47,6 +47,7 @@ final readonly class PropertyService
 
         $filters = [];
         $filtersIsEmpty = empty($propertyFilter->filters);
+
         if (!$filtersIsEmpty) {
             try {
                 $filters = json_decode($propertyFilter->filters, true, flags: JSON_THROW_ON_ERROR);
@@ -58,10 +59,9 @@ final readonly class PropertyService
         }
 
         $childrenSections = $this->sectionRepository->findChildrenByFullPath($section->getFullPath(), $localeInt);
-        $allSections = [$section, ...$childrenSections];
+        $sectionCodes = array_map(fn(Section $section) => $section->getCode(), [$section, ...$childrenSections]);
 
-        $sectionCodes = array_map(fn(Section $section) => $section->getCode(), $allSections);
-
+        /** @var ProductPropertyDTO[] $productsProperties */
         $productsProperties = [];
         if (!$filtersIsEmpty) {
             $groupedProducts = $this->productRepository->getProductFilters(
@@ -70,10 +70,7 @@ final readonly class PropertyService
             );
 
             foreach ($groupedProducts as $groupedProduct) {
-                $productProperty = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
-
-                /** @var ProductPropertyDTO[] $productsProperties */
-                $productsProperties[$productProperty->featureCode][$productProperty->valueCode] = $productProperty->products;
+                $productsProperties[] = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
             }
         }
 
@@ -93,63 +90,63 @@ final readonly class PropertyService
         );
 
         $filters = [];
-        $valueFilters = [];
+        $propertiesFilter = [];
+
+        $totalCount = 0;
         foreach ($foundedProperties as $foundedProperty) {
             $propertyFilterDTO = $this->denormalizer->denormalize(
                 $foundedProperty['_id'],
                 PropertyFilterDTO::class,
             );
 
-            if (!array_key_exists($propertyFilterDTO->_id, $indexedPropertiesByCode)) {
+            if (!array_key_exists($propertyFilterDTO->featureCode, $indexedPropertiesByCode)) {
                 continue;
             }
 
             /** @var Property $property */
             $property = $indexedPropertiesByCode[$propertyFilterDTO->featureCode];
 
-            $filter = new PropertyFilterItemResponseDTO(
-                code: $property->getCode(),
-                name: $property->getNameByLocale($locale),
-                count: $propertyFilterDTO->count,
-            );
-
-            foreach ($propertyFilterDTO->values as $propertyValue) {
-                /** @var PropertyFilterValueDTO $propertyValue */
-                $propertyValue = $this->denormalizer->denormalize($propertyValue, PropertyFilterValueDTO::class);
-
-                $unit = $property->getUnitNameByCodeAndLocale($propertyValue->unitCode, $localeInt);
-
-                // TODO посомтреть что не так с unit
-                $value = new PropertyFilterItemValueResponseDTO(
-                    code: $propertyFilterDTO->valueCode,
-                    name: $propertyFilterDTO->valueCode . ($unit ? " $unit" : ''),
+            if (array_key_exists($property->getCode(), $propertiesFilter)) {
+                $filter =  $propertiesFilter[$property->getCode()];
+            } else {
+                $filter = new PropertyFilterItemResponseDTO(
+                    code: $property->getCode(),
+                    name: $property->getNameByLocale($locale),
                 );
 
-                if (!$filtersIsEmpty
-                    && array_key_exists($propertyFilterDTO->featureCode, $productsProperties) &&
-                    array_key_exists(
-                        $propertyFilterDTO->valueCode,
-                        $productsProperties[$propertyFilterDTO->featureCode]
-                    ) &&
-                    in_array(
-                        $propertyValue->productCode,
-                        $productsProperties[$propertyFilterDTO->featureCode][$propertyFilterDTO->valueCode]
-                    )
-                ) {
-                    $value;
-                }
-
-                $valueFilters[$propertyFilterDTO->featureCode][$propertyFilterDTO->valueCode] = $value;
-
-                $filter->addValue($value);
+                $filters[] = $filter;
+                $propertiesFilter[$property->getCode()] = $filter;
             }
 
-            $filters[] = $filter;
+            $unit = $property->getUnitNameByCodeAndLocale($propertyFilterDTO->unitCode, $localeInt);
+
+            $value = new PropertyFilterItemValueResponseDTO(
+                code: $propertyFilterDTO->valueCode,
+                name: $propertyFilterDTO->valueName . ($unit ? " $unit" : ''),
+            );
+
+            if(!$filtersIsEmpty) {
+                $countProducts = 0;
+                foreach ($productsProperties as $productsProperty) {
+                    $intersectedProducts = array_intersect($productsProperty->products, $propertyFilterDTO->productCodes);
+                    $countProducts += count($intersectedProducts);
+                }
+            } else {
+                $countProducts = count($propertyFilterDTO->productCodes);
+            }
+
+            $value
+                ->setCount($countProducts)
+                ->setEnabledFromBoolean($countProducts > 0);
+
+            $totalCount += $countProducts;
+
+            $filter->addValue($value);
         }
 
         return new PropertyFilterResponseDTO(
             filters: $filters,
-            count: 0
+            count: $totalCount
         );
     }
 }

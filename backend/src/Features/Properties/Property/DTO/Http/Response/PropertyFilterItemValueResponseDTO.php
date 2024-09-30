@@ -2,6 +2,8 @@
 
 namespace App\Features\Properties\Property\DTO\Http\Response;
 
+use Symfony\Component\Serializer\Attribute\Ignore;
+
 final class PropertyFilterItemValueResponseDTO
 {
     public function __construct(
@@ -56,6 +58,7 @@ final class PropertyFilterItemValueResponseDTO
         return $this->enabled;
     }
 
+    #[Ignore]
     public function setEnabledFromBoolean(bool $enabled): PropertyFilterItemValueResponseDTO
     {
         return $this->setEnabled($enabled ? 'true' : 'false');

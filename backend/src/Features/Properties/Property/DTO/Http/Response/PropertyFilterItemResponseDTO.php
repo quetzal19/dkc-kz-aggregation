@@ -3,14 +3,18 @@
 namespace App\Features\Properties\Property\DTO\Http\Response;
 
 use App\Helper\Enum\FilterListType;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Attributes as OA;
 
 final class PropertyFilterItemResponseDTO
 {
     public function __construct(
         private string $code,
+        #[OA\Property(type: 'string', example: 'name')]
         private ?string $name = null,
         private string $type = FilterListType::LIST->value,
         private int $count = 0,
+        #[OA\Property(type: 'array', items: new OA\Items(ref: new Model(type: PropertyFilterItemValueResponseDTO::class)))]
         /** @var PropertyFilterItemValueResponseDTO[] $values */
         private array $values = [],
     ) {
@@ -63,6 +67,7 @@ final class PropertyFilterItemResponseDTO
     public function addValue(PropertyFilterItemValueResponseDTO $value): PropertyFilterItemResponseDTO
     {
         $this->values[] = $value;
+        $this->count += $value->getCount();
         return $this;
     }
 

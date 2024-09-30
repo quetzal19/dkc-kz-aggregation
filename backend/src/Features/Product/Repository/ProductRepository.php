@@ -160,18 +160,16 @@ class ProductRepository extends ServiceDocumentRepository
                 'featureCode' => '$featureCode',
                 'valueName' => '$filteredName.name',
                 'valueCode' => '$valueCode',
+                'unitCode' => '$unitCode',
             ])
-            ->field('values')
-            ->push([
-                'unitCode' => '$_id.unitCode',
-                'productCode' => '$_id.productCode',
-            ]);
+            ->field('productCodes')
+            ->push('$productCode');
 
         $builder
             ->addFields()
             ->field('index')
             ->expression([
-                '$indexOfArray' => [$propertyCodes, '$_id']
+                '$indexOfArray' => [$propertyCodes, '$_id.featureCode'],
             ]);
 
         $builder->sort('index', 1);
@@ -183,7 +181,8 @@ class ProductRepository extends ServiceDocumentRepository
                 'featureCode' => '$_id.featureCode',
                 'valueCode' => '$_id.valueCode',
                 'valueName' => '$_id.valueName',
-                'values' => '$values',
+                'unitCode' => '$_id.unitCode',
+                'productCodes' => '$productCodes',
             ]);
 
         return $builder->getAggregation()->getIterator();
@@ -218,7 +217,7 @@ class ProductRepository extends ServiceDocumentRepository
         foreach ($filters as $property => $values) {
             if (is_array($values)) {
                 foreach ($values as $value) {
-                    $match->addOr([
+                    $match->addAnd([
                         '$and' => [
                             ['_id.featureCode' => $property],
                             ['_id.valueCode' => $value]
