@@ -2,15 +2,14 @@
 
 namespace App\Controller\Api\v1;
 
-use App\Helper\Exception\Attributes\NotFoundResponse;
-use App\Helper\Exception\Attributes\NotValidDataResponse;
+use App\Helper\Exception\Attributes\{NotFoundResponse, NotValidDataResponse};
+use App\Helper\Pagination\Attributes\{LimitParameter, PageParameter};
 use App\Helper\DTO\Data\{Product\AnalogAccessoryProductDTO, Section\AnalogAccessorySectionDTO};
 use App\Features\Analog\{Filter\AnalogFilter, Service\AnalogService};
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
-use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\{MapQueryParameter, MapQueryString};
 use Symfony\Component\Routing\Attribute\Route;
 use OpenApi\Attributes as OA;
 
@@ -42,20 +41,6 @@ final class AnalogController extends AbstractController
                 schema: new OA\Schema(type: 'string'),
                 example: 'Контактные блоки'
             ),
-            new OA\Parameter(
-                name: 'page',
-                description: 'Номер страницы',
-                in: 'query',
-                required: false,
-                schema: new OA\Schema(type: 'integer', default: 1, minimum: 1)
-            ),
-            new OA\Parameter(
-                name: 'limit',
-                description: 'Количество элементов на странице',
-                in: 'query',
-                required: false,
-                schema: new OA\Schema(type: 'integer', default: 4, maximum: 100, minimum: 1)
-            ),
         ]
     )]
     #[OA\Response(
@@ -63,6 +48,8 @@ final class AnalogController extends AbstractController
         description: 'Success',
         content: new OA\JsonContent(ref: new Model(type: AnalogAccessoryProductDTO::class))
     )]
+    #[LimitParameter(default: 4)]
+    #[PageParameter]
     #[NotFoundResponse]
     #[NotValidDataResponse]
     #[Route('/products/', name: 'api_v1_analogs_products', methods: [Request::METHOD_GET])]

@@ -14,7 +14,7 @@ class ProductRepository extends ServiceDocumentRepository
         parent::__construct($registry, Product::class);
     }
 
-    public function findActiveBySectionCodes(array $sectionCodes, string $locale): array
+    public function findActiveBySectionCodes(array $sectionCodes, array $filters, string $locale): array
     {
         $builder = $this->createAggregationBuilder();
 
@@ -34,6 +34,19 @@ class ProductRepository extends ServiceDocumentRepository
             ->equals(true)
             ->field('locale')
             ->equals(LocaleType::fromString($locale)->value);
+
+
+//        if (!empty($filters)) {
+//            $match = $builder->match();
+//
+//            foreach ($filters as $property => $values) {
+//                foreach ($values as $value) {
+//                    $match->addOr([
+//                        'property' => ['$regex' => "$property:$value:"]
+//                    ]);
+//                }
+//            }
+//        }
 
         $builder
             ->project()
