@@ -2,4 +2,5 @@
 * * * * * if [ $(ps aux | grep 'processing:data-from-temp-storage' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage > var/log/cron-data-from-temp-storage.log
 
 # Обработка очереди
-* * * * * if [ $(ps aux | grep 'messenger:consume amqp' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console messenger:consume amqp --limit=1000 > var/log/cron-amqp.log; fi
+* * * * * if [ $(ps aux | grep 'messenger:consume amqp' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console messenger:consume messages --limit=1000 > var/log/cron-amqp.log; fi
+messages
