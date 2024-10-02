@@ -36,17 +36,17 @@ class ProductRepository extends ServiceDocumentRepository
             ->equals(LocaleType::fromString($locale)->value);
 
 
-//        if (!empty($filters)) {
-//            $match = $builder->match();
-//
-//            foreach ($filters as $property => $values) {
-//                foreach ($values as $value) {
-//                    $match->addOr([
-//                        'property' => ['$regex' => "$property:$value:"]
-//                    ]);
-//                }
-//            }
-//        }
+        if (!empty($filters)) {
+            $match = $builder->match();
+
+            foreach ($filters as $property => $values) {
+                foreach ($values as $value) {
+                    $match->addOr([
+                        'property' => ['$regex' => "$property:$value:"]
+                    ]);
+                }
+            }
+        }
 
         $builder
             ->project()

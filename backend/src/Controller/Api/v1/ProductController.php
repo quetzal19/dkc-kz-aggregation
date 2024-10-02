@@ -2,11 +2,13 @@
 
 namespace App\Controller\Api\v1;
 
+use App\Helper\DTO\Data\Product\AnalogAccessoryProductDTO;
+use Nelmio\ApiDocBundle\Annotation\Model;
 use App\Helper\Exception\Attributes\{NotFoundResponse, NotValidDataResponse};
 use App\Helper\Pagination\Attributes\{LimitParameter, PageParameter};
 use App\Features\Product\{Filter\ProductFilter, Service\ProductService};
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\{JsonResponse, Request};
+use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Annotation\Route;
 use OpenApi\Attributes as OA;
@@ -34,6 +36,11 @@ final class ProductController extends AbstractController
                 schema: new OA\Schema(type: 'string', example: '{"code": ["value"]}'),
             ),
         ]
+    )]
+    #[OA\Response(
+        response: Response::HTTP_OK,
+        description: 'Success',
+        content: new OA\JsonContent(ref: new Model(type: AnalogAccessoryProductDTO::class))
     )]
     #[LimitParameter]
     #[PageParameter]

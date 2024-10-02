@@ -27,17 +27,17 @@ final readonly class ProductService
         /** @var Section $section */
         $section = $this->sectionRepository->findActiveSection($filter->sectionCode, $locale);
 
-//        if (!$section) {
-//            throw new ApiException(
-//                message: 'Секция не найдена или не активна',
-//                status: Response::HTTP_NOT_FOUND,
-//            );
-//        }
+        if (!$section) {
+            throw new ApiException(
+                message: 'Секция не найдена или не активна',
+                status: Response::HTTP_NOT_FOUND,
+            );
+        }
 
-//        $filters = [];
-//        if (!empty($filter->filters)) {
-//            $filters = json_decode($filter->filters, true);
-//        }
+        $filters = [];
+        if (!empty($filter->filters)) {
+            $filters = json_decode($filter->filters, true);
+        }
 
         $childrenSections = $this->sectionRepository->findChildrenByFullPath(
             $section->getFullPath(),
@@ -46,7 +46,7 @@ final readonly class ProductService
 
         $sectionCodes = array_map(fn(Section $section) => $section->getCode(), [$section, ...$childrenSections]);
 
-        $productCodes = $this->productRepository->findActiveBySectionCodes($sectionCodes, [], $locale);
+        $productCodes = $this->productRepository->findActiveBySectionCodes($sectionCodes, $filters, $locale);
         $count = count($productCodes);
 
         $productCodes = PaginationDTO::sliceArray(data: $productCodes, page: $filter->page, limit: $filter->limit);
