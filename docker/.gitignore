@@ -1,5 +1,6 @@
 local/mongo/data/db/
 local/mongo/data/log/
+local/mongo/backup/
 local/nginx/logs/
 local/rabbitmq/log/
 local/rabbitmq/data/
@@ -8,4 +9,5 @@ dev/rabbitmq/log/
 dev/rabbitmq/data/
 dev/mongo/data/db/
 dev/mongo/data/log/
+dev/mongo/backup/
 dev/nginx/logs/
