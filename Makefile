@@ -46,4 +46,4 @@ cron-up: ## Запустить контейнер крона (не для лок
 	docker compose -f docker/docker-compose.$(ENV).yml up -d cron
 
 bash-rabbit: ## Зайти в bash контейнера с RabbitMq
-	docker compose -f docker/docker-compose.$(ENV).yml exec rabbit sh
+	docker compose -f docker/docker-compose.$(ENV).yml exec rabbit bash
