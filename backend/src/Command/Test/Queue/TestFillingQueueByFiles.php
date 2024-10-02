@@ -2,6 +2,7 @@
 
 namespace App\Command\Test\Queue;
 
+use App\Features\TempStorage\DTO\Message\TempStorageMessage;
 use App\Features\TempStorage\DTO\TempStorageDTO;
 use Symfony\Component\Console\{Attribute\AsCommand,
     Command\Command,
@@ -116,7 +117,7 @@ final class TestFillingQueueByFiles extends Command
                 );
 
                 try {
-                    $this->messageBus->dispatch($storageMessage);
+                    $this->messageBus->dispatch(new TempStorageMessage($storageMessage));
                 } catch (ExceptionInterface $e) {
                     $output->writeln("Error filling queue: " . $e->getMessage());
                     continue;

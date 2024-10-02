@@ -7,6 +7,7 @@ framework:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             messages:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                serializer: App\Features\TempStorage\Serializer\TempStorageMessageSerializer
                 options:
                     exchange:
                         name: facet
@@ -18,7 +19,7 @@ framework:
 
         routing:
             # Route your messages to the transports
-            'App\Features\TempStorage\DTO\TempStorageDTO': messages
+            'App\Features\TempStorage\DTO\Message\TempStorageMessage': messages
 
 # when@test:
 #    framework:
