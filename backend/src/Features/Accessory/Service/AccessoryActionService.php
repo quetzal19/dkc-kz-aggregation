@@ -72,13 +72,6 @@ final readonly class AccessoryActionService implements ActionInterface
 
         $this->documentManager->persist($accessoryDocument);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Accessory created Id: $dto->id. message: " . json_encode($dto));
 
         return true;
@@ -138,13 +131,6 @@ final readonly class AccessoryActionService implements ActionInterface
         $accessoryDocument->setAccessory($accessory);
         $accessoryDocument->setSection($section);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Accessory updated Id: $dto->id. message: " . json_encode($dto));
 
         return true;
@@ -163,13 +149,6 @@ final readonly class AccessoryActionService implements ActionInterface
         }
 
         $this->documentManager->remove($accessoryDocument);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         $this->logger->info("Accessory deleted Id: $dto->id. message: " . json_encode($dto));
 

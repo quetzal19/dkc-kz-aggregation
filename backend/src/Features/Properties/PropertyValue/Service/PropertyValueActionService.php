@@ -40,13 +40,6 @@ final readonly class PropertyValueActionService implements ActionInterface
         $propertyValue = $this->propertyValueMapper->mapFromMessageDTO($dto);
 
         $this->documentManager->persist($propertyValue);
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Throwable $exception) {
-            $this->logger->error($exception->getMessage());
-        }
-
         $this->logger->info("PropertyValue with code '$dto->code' created");
         return true;
     }
@@ -68,12 +61,6 @@ final readonly class PropertyValueActionService implements ActionInterface
 
         $this->propertyValueMapper->mapFromMessageDTO($dto, $propertyValue);
 
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-        }
-
         $this->logger->info("PropertyValue with code '$dto->code' updated");
         return true;
     }
@@ -94,12 +81,6 @@ final readonly class PropertyValueActionService implements ActionInterface
         }
 
         $this->documentManager->remove($propertyValue);
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-        }
 
         $this->logger->info("PropertyValue with code '$dto->code' deleted");
         return true;

@@ -72,13 +72,6 @@ final readonly class AnalogActionService implements ActionInterface
 
         $this->documentManager->persist($analogDocument);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Analog with id '$dto->id' created, message: " . json_encode($dto));
 
         return true;
@@ -136,13 +129,6 @@ final readonly class AnalogActionService implements ActionInterface
             ->setAnalog($analogProduct)
             ->setSection($section);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Analog with id '$dto->id' updated, message: " . json_encode($dto));
 
         return true;
@@ -161,13 +147,6 @@ final readonly class AnalogActionService implements ActionInterface
         }
 
         $this->documentManager->remove($analog);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         $this->logger->info("Analog with id '$dto->id' deleted, message: " . json_encode($dto));
 

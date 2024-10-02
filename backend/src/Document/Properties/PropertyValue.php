@@ -8,7 +8,6 @@ use Doctrine\Common\Collections\{ArrayCollection, Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
 #[MongoDB\Document(repositoryClass: PropertyValueRepository::class)]
-#[MongoDB\UniqueIndex(keys: ['code' => 'asc'])]
 class PropertyValue
 {
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
@@ -16,9 +15,9 @@ class PropertyValue
 
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
     #[MongoDB\Index(keys: ['code' => 1], partialFilterExpression: [
-        '$and' => [
-            ['code' => ['$ne' => '']],
-            ['code' => ['$ne' => null]]
+        'code' => [
+            ['$ne' => ''],
+            ['$ne' => null]
         ]
     ])]
     private ?string $code;

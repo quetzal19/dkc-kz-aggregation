@@ -8,7 +8,6 @@ use App\Features\Product\Repository\ProductRepository;
 use App\Features\Properties\Property\Repository\PropertyRepository;
 use App\Features\Properties\PropertyFeatureMap\DTO\Message\PropertyFeatureMapMessageDTO;
 use App\Helper\Interface\{ActionInterface, Message\MessageDTOInterface};
-use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 
 final readonly class PropertyFeatureMapActionService implements ActionInterface
@@ -17,7 +16,6 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
         private ProductRepository $productRepository,
         private PropertyRepository $propertyRepository,
         private LoggerInterface $logger,
-        private DocumentManager $documentManager,
     ) {
     }
 
@@ -68,13 +66,6 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
 
         $product->setProperties(feature: $property->getCode(), unit: '');
 
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info(
             "On delete property feature map, unit with code " . $dto->unitCode
             . " removed from property with code " . $dto->primaryKeys->featureCode
@@ -105,13 +96,6 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             feature: $property->getCode(),
             unit: $dto->unitCode
         );
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         return true;
     }

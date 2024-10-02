@@ -18,6 +18,19 @@ class TempStorageRepository extends ServiceDocumentRepository
     /**
      * @throws MongoDBException
      */
+    public function deleteByIds(array $ids): void
+    {
+        $this->createQueryBuilder()
+            ->remove()
+            ->field('_id')
+            ->in($ids)
+            ->getQuery()
+            ->execute();
+    }
+
+    /**
+     * @throws MongoDBException
+     */
     public function findHighPriority(): \Iterator
     {
         return $this->createQueryBuilder()
@@ -30,22 +43,19 @@ class TempStorageRepository extends ServiceDocumentRepository
     {
         $builder = $this->createAggregationBuilder();
 
-        $builder
-            ->sort('timestamp', SortType::ASC->value)
-            ->sort('actionPriority', SortType::DESC->value)
-            ->sort('priority', SortType::DESC->value);
-
-        if ($paginationDTO = $priorityFilter->paginationDTO) {
-            $builder
-                ->limit($paginationDTO->getLimit())
-                ->skip($paginationDTO->getSkip());
-        }
-
         if ($priorityFilter->entity) {
             $builder
                 ->match()
                 ->field('entity')
                 ->equals($priorityFilter->entity);
+        }
+
+        $builder->sort('timestamp', SortType::ASC->value);
+
+        if ($paginationDTO = $priorityFilter->paginationDTO) {
+            $builder
+                ->limit($paginationDTO->getLimit())
+                ->skip($paginationDTO->getSkip());
         }
 
         if ($priorityFilter->action) {

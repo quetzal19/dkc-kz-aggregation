@@ -61,13 +61,6 @@ final readonly class ProductActionService implements ActionInterface
 
         $this->documentManager->persist($product);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Product with code '$dto->code' and locale '$dto->locale' created");
         return true;
     }
@@ -104,13 +97,6 @@ final readonly class ProductActionService implements ActionInterface
 
         $this->productMapper->mapFromMessageDTO($dto, $product);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Product with code '$dto->code' and locale '$dto->locale' updated");
 
         return true;
@@ -133,13 +119,6 @@ final readonly class ProductActionService implements ActionInterface
         }
 
         $this->documentManager->remove($product);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         $this->logger->info("Product with code '$dto->code' and locale '$dto->locale' deleted");
 

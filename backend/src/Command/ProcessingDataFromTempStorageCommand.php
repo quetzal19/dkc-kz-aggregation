@@ -3,11 +3,18 @@
 namespace App\Command;
 
 use App\Features\Properties\PropertyUnit\Handler\PropertyUnitHandlerStorage;
+use App\Features\TempStorage\Repository\TempStorageRepository;
 use App\Features\Priority\{Builder\PriorityFilterBuilder, Service\PriorityService};
 use App\Helper\Locator\Storage\ServiceHandlerStorageLocator;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\{Attribute\AsCommand, Command\Command, Input\InputInterface, Output\OutputInterface};
+use Symfony\Component\Console\{Attribute\AsCommand,
+    Command\Command,
+    Input\InputArgument,
+    Input\InputInterface,
+    Output\OutputInterface
+};
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand(
     name: 'processing:data-from-temp-storage',
@@ -21,45 +28,108 @@ final class ProcessingDataFromTempStorageCommand extends Command
         private readonly ServiceHandlerStorageLocator $locator,
         private readonly LoggerInterface $logger,
         private readonly DocumentManager $documentManager,
+        private readonly TempStorageRepository $storageRepository,
+
+        #[Autowire('%app.entity_priorities%')]
+        private readonly array $entityPriorities,
     ) {
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this->addArgument(
+            'limit',
+            InputArgument::OPTIONAL,
+            'Limit of messages to process',
+            2500
+        );
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $filter = PriorityFilterBuilder::create()->build();
-
-        try {
-            $priorityData = $this->priorityService->getMaxPriorityData($filter);
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+        $limit = $input->getArgument('limit');
+        if (!is_numeric($limit) || $limit < 1) {
+            $output->writeln('Limit is not valid: ' . $limit);
             return Command::FAILURE;
         }
 
-        foreach ($priorityData as $storage) {
-            $handler = $this->locator->getHandler($storage->getEntity());
+        $entities = $this->entityPriorities;
+        arsort($entities);
+
+        $entityNames = array_keys($entities);
+
+        foreach ($entityNames as $entity) {
+            $handler = $this->locator->getHandler($entity);
+
             if (!$handler) {
-                $this->logger->warning('Handler not found: ' . $storage->getEntity());
-                $this->documentManager->remove($storage);
+                $this->logger->warning('Handler not found: ' . $entity);
                 continue;
             }
 
-            $isSuccessHandle = $handler->handle($storage);
             $isHandlerUnit = $handler instanceof PropertyUnitHandlerStorage;
-            $isRemoveStorage = !$isHandlerUnit || $isSuccessHandle;
 
-            if ($isRemoveStorage) {
-                $this->documentManager->remove($storage);
+            $filter = PriorityFilterBuilder::create()
+                ->setEntity($entity)
+                ->setPagination(1, $limit)
+                ->build();
+
+            foreach ($this->getPriorityDataGenerator($filter) as $priorityDataBatch) {
+                $storageIds = [];
+                foreach ($this->getStorageGenerator($priorityDataBatch) as $storage) {
+                    $isSuccessHandle = $handler->handle($storage['message'], $storage['action']);
+                    $isRemoveStorage = !$isHandlerUnit || $isSuccessHandle;
+
+                    if ($isRemoveStorage) {
+                        $storageIds[] = $storage['_id'];
+                    }
+                }
+
+                try {
+                    $this->documentManager->flush();
+                } catch (MongoDBException $e) {
+                    $this->logger->error($e->getMessage());
+                }
+
+                try {
+                    $this->storageRepository->deleteByIds($storageIds);
+                } catch (MongoDBException $e) {
+                    $this->logger->error($e->getMessage());
+                }
+
+                $this->documentManager->clear();
             }
         }
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return Command::FAILURE;
-        }
 
         return Command::SUCCESS;
     }
+
+    private function getStorageGenerator(array $priorityDataBatch): \Generator
+    {
+        foreach ($priorityDataBatch as $storage) {
+            yield $storage;
+        }
+    }
+
+    private function getPriorityDataGenerator($filter): \Generator
+    {
+        while (true) {
+            try {
+                $priorityData = $this->priorityService->getMaxPriorityData($filter);
+            } catch (\Exception $e) {
+                $this->logger->error($e->getMessage());
+                continue;
+            }
+
+            $priorityData = $priorityData->toArray();
+
+            if (empty($priorityData)) {
+                break;
+            }
+
+            yield $priorityData;
+        }
+    }
+
 }

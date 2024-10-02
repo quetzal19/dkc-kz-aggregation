@@ -34,13 +34,6 @@ final readonly class ProductFeatureActionService implements ActionInterface
             return false;
         }
 
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
-        }
-
         $this->logger->info(
             "Product feature, product with code " . $dto->primaryKeys->productCode
             . " and property with code " . $dto->primaryKeys->featureCode . " created",
@@ -53,13 +46,6 @@ final readonly class ProductFeatureActionService implements ActionInterface
     {
         /** @var ProductFeatureMessageDTO $dto */
         if (!$this->setPropertiesProduct($dto, 'update')) {
-            return false;
-        }
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
             return false;
         }
 
@@ -82,13 +68,6 @@ final readonly class ProductFeatureActionService implements ActionInterface
         }
 
         $product->removePropertyByFeature($property->getCode());
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
-        }
 
         $this->logger->info(
             "Product feature, product with code " . $dto->primaryKeys->productCode

@@ -50,14 +50,6 @@ final readonly class SectionActionService implements ActionInterface
         }
 
         $this->documentManager->persist($newSection);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' created");
         return true;
     }
@@ -85,14 +77,6 @@ final readonly class SectionActionService implements ActionInterface
         } catch (Exception) {
             return false;
         }
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' updated");
         return true;
     }
@@ -114,14 +98,6 @@ final readonly class SectionActionService implements ActionInterface
         }
 
         $this->documentManager->remove($section);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' deleted");
         return true;
     }

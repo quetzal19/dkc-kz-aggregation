@@ -43,13 +43,6 @@ final readonly class PropertyActionService implements ActionInterface
 
         $this->documentManager->persist($newProperty);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Property with code '$dto->code' created");
 
         return true;
@@ -70,13 +63,6 @@ final readonly class PropertyActionService implements ActionInterface
 
         $this->propertyMapper->mapFromMessageDTO($dto, $property);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Property with code '$dto->code' updated");
         return true;
     }
@@ -95,13 +81,6 @@ final readonly class PropertyActionService implements ActionInterface
         }
 
         $this->documentManager->remove($property);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         $this->logger->info("Property with code '$dto->code' deleted");
         return true;

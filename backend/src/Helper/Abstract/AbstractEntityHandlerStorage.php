@@ -17,16 +17,13 @@ abstract readonly class AbstractEntityHandlerStorage implements EntityHandlerSto
     ) {
     }
 
-    public function handle(StorageInterface $storage): bool
+    public function handle(string $message, string $action): bool
     {
-        $action = $storage->getAction();
-
         try {
-            $message = $storage->getMessage();
-            json_decode($storage->getMessage(), true, flags: JSON_THROW_ON_ERROR);
+            $message = json_decode($message, true, flags: JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $this->logger->error(
-                'Could not decode json: ' . $storage->getMessage() .
+                'Could not decode json: ' . $message .
                 ' exception: ' . $e->getMessage()
             );
             return false;
