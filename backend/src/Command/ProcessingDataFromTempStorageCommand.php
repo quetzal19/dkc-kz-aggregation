@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Features\TempStorage\Repository\TempStorageRepository;
-use App\Features\Priority\{Builder\PriorityFilterBuilder, Filter\PriorityFilter, Service\PriorityService};
+use App\Features\Priority\{Builder\PriorityFilterBuilder, Service\PriorityService};
 use App\Helper\Locator\Storage\ServiceHandlerStorageLocator;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
@@ -63,6 +63,7 @@ final class ProcessingDataFromTempStorageCommand extends Command
         $entityNames = array_keys($entities);
 
         $entity = $input->getArgument('entity');
+
         if (!empty($entity)) {
             if (!in_array($entity, $entityNames)) {
                 $output->writeln('Entity is not valid: ' . $entity);
@@ -86,38 +87,6 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 ->setPagination(1, $limit)
                 ->build();
 
-            foreach ($this->getPriorityDataGenerator($filter) as $priorityDataBatch) {
-                $storageIds = [];
-
-                foreach ($priorityDataBatch as $storage) {
-                    if ($handler->handle($storage['message'], $storage['action'])) {
-                        $storageIds[] = $storage['_id'];
-                    }
-                }
-
-                try {
-                    $this->documentManager->flush();
-                } catch (MongoDBException $e) {
-                    $this->logger->error($e->getMessage());
-                }
-
-                try {
-                    $this->storageRepository->deleteByIds($storageIds);
-                } catch (MongoDBException $e) {
-                    $this->logger->error($e->getMessage());
-                }
-
-                $this->documentManager->clear();
-            }
-        }
-
-
-        return Command::SUCCESS;
-    }
-
-    private function getPriorityDataGenerator(PriorityFilter $filter): \Generator
-    {
-        while (true) {
             try {
                 $priorityData = $this->priorityService->getMaxPriorityData($filter);
             } catch (\Exception $e) {
@@ -125,14 +94,30 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 continue;
             }
 
-            $priorityData = $priorityData->toArray();
-
-            if (empty($priorityData)) {
-                break;
+            $storageIds = [];
+            foreach ($priorityData as $storage) {
+                if ($handler->handle($storage['message'], $storage['action'])) {
+                    $storageIds[] = $storage['_id'];
+                }
             }
 
-            yield $priorityData;
+            try {
+                $this->documentManager->flush();
+            } catch (MongoDBException $e) {
+                $this->logger->error($e->getMessage());
+            }
+
+            try {
+                $this->storageRepository->deleteByIds($storageIds);
+            } catch (MongoDBException $e) {
+                $this->logger->error($e->getMessage());
+            }
+
+            $this->documentManager->clear();
         }
+
+
+        return Command::SUCCESS;
     }
 
 }
