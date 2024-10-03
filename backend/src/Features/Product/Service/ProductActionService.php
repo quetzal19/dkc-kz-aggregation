@@ -2,6 +2,7 @@
 
 namespace App\Features\Product\Service;
 
+use App\Features\Message\Service\MessageValidatorService;
 use App\Features\Product\DTO\Message\ProductMessageDTO;
 use App\Features\Product\Mapper\ProductMapper;
 use App\Features\Product\Repository\ProductRepository;
@@ -11,6 +12,7 @@ use App\Helper\Interface\{ActionInterface, Mapper\MapperMessageInterface, Messag
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final readonly class ProductActionService implements ActionInterface
 {
@@ -22,6 +24,7 @@ final readonly class ProductActionService implements ActionInterface
         private DocumentManager $documentManager,
         private ProductRepository $productRepository,
         private SectionRepository $sectionRepository,
+        private MessageValidatorService $messageValidatorService,
         #[Autowire(service: 'map.product.mapper')]
         private MapperMessageInterface $productMapper,
     ) {
@@ -39,6 +42,13 @@ final readonly class ProductActionService implements ActionInterface
             $this->logger->error(
                 "On create product with code '$dto->code' and locale '$dto->locale' product already exists," .
                 " message: " . json_encode($dto)
+            );
+            return false;
+        }
+
+        if (empty($dto->sectionId)) {
+            $this->logger->error(
+                "On create product, section externalId is empty, message: " . json_encode($dto)
             );
             return false;
         }
@@ -78,7 +88,18 @@ final readonly class ProductActionService implements ActionInterface
                 "On update product with code '$dto->code' and locale '$dto->locale' product not found," .
                 " message: " . json_encode($dto)
             );
-            return false;
+
+            try {
+                $this->messageValidatorService->validateMessageDTO($dto, ['create']);
+            } catch (ValidationFailedException $ex) {
+                $this->logger->error(
+                    'Post update product, validation for group create failed: ' . $ex->getMessage(
+                    ) . ", message: " . json_encode($dto)
+                );
+                return false;
+            }
+
+            return $this->create($dto);
         }
 
         if (!empty($dto->sectionId)) {

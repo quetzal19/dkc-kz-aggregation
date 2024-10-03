@@ -2,6 +2,7 @@
 
 namespace App\Features\Properties\PropertyValue\Service;
 
+use App\Features\Message\Service\MessageValidatorService;
 use App\Features\Properties\PropertyValue\DTO\Message\PropertyValueMessageDTO;
 use App\Features\Properties\PropertyValue\Mapper\PropertyValueMapper;
 use App\Features\Properties\PropertyValue\Repository\PropertyValueRepository;
@@ -9,6 +10,7 @@ use App\Helper\Interface\{ActionInterface, Mapper\MapperMessageInterface, Messag
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final readonly class PropertyValueActionService implements ActionInterface
 {
@@ -19,6 +21,7 @@ final readonly class PropertyValueActionService implements ActionInterface
         private DocumentManager $documentManager,
         #[Autowire(service: 'map.property.value.mapper')]
         private MapperMessageInterface $propertyValueMapper,
+        private MessageValidatorService $messageValidatorService,
     ) {
     }
 
@@ -56,7 +59,18 @@ final readonly class PropertyValueActionService implements ActionInterface
                 "On update propertyValue with code '$dto->code' not found,"
                 . " message: " . json_encode($dto)
             );
-            return false;
+
+            try {
+                $this->messageValidatorService->validateMessageDTO($dto, ['create']);
+            } catch (ValidationFailedException $ex) {
+                $this->logger->error(
+                    'Post update propertyValue, validation for group create failed: ' . $ex->getMessage(
+                    ) . ", message: " . json_encode($dto)
+                );
+                return false;
+            }
+
+            return $this->create($dto);
         }
 
         $this->propertyValueMapper->mapFromMessageDTO($dto, $propertyValue);

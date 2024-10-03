@@ -2,9 +2,8 @@
 
 namespace App\Command;
 
-use App\Features\Properties\PropertyUnit\Handler\PropertyUnitHandlerStorage;
 use App\Features\TempStorage\Repository\TempStorageRepository;
-use App\Features\Priority\{Builder\PriorityFilterBuilder, Service\PriorityService};
+use App\Features\Priority\{Builder\PriorityFilterBuilder, Filter\PriorityFilter, Service\PriorityService};
 use App\Helper\Locator\Storage\ServiceHandlerStorageLocator;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
@@ -44,6 +43,11 @@ final class ProcessingDataFromTempStorageCommand extends Command
             'Limit of messages to process',
             2500
         );
+        $this->addArgument(
+            'entity',
+            InputArgument::OPTIONAL,
+            'Entity to process',
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -56,8 +60,18 @@ final class ProcessingDataFromTempStorageCommand extends Command
 
         $entities = $this->entityPriorities;
         arsort($entities);
-
         $entityNames = array_keys($entities);
+
+        $entity = $input->getArgument('entity');
+        if (!empty($entity)) {
+            if (!in_array($entity, $entityNames)) {
+                $output->writeln('Entity is not valid: ' . $entity);
+                return Command::FAILURE;
+            }
+
+            $entityNames = [$entity];
+        }
+
 
         foreach ($entityNames as $entity) {
             $handler = $this->locator->getHandler($entity);
@@ -67,8 +81,6 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 continue;
             }
 
-            $isHandlerUnit = $handler instanceof PropertyUnitHandlerStorage;
-
             $filter = PriorityFilterBuilder::create()
                 ->setEntity($entity)
                 ->setPagination(1, $limit)
@@ -76,11 +88,9 @@ final class ProcessingDataFromTempStorageCommand extends Command
 
             foreach ($this->getPriorityDataGenerator($filter) as $priorityDataBatch) {
                 $storageIds = [];
-                foreach ($this->getStorageGenerator($priorityDataBatch) as $storage) {
-                    $isSuccessHandle = $handler->handle($storage['message'], $storage['action']);
-                    $isRemoveStorage = !$isHandlerUnit || $isSuccessHandle;
 
-                    if ($isRemoveStorage) {
+                foreach ($priorityDataBatch as $storage) {
+                    if ($handler->handle($storage['message'], $storage['action'])) {
                         $storageIds[] = $storage['_id'];
                     }
                 }
@@ -105,14 +115,7 @@ final class ProcessingDataFromTempStorageCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function getStorageGenerator(array $priorityDataBatch): \Generator
-    {
-        foreach ($priorityDataBatch as $storage) {
-            yield $storage;
-        }
-    }
-
-    private function getPriorityDataGenerator($filter): \Generator
+    private function getPriorityDataGenerator(PriorityFilter $filter): \Generator
     {
         while (true) {
             try {
