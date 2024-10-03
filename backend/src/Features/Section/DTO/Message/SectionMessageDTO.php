@@ -31,7 +31,7 @@ final readonly class SectionMessageDTO implements MessageDTOInterface
         )]
         public mixed $parentId = null,
 
-        #[Assert\NotBlank(groups: ['create'])]
+        #[Assert\NotNull(groups: ['create'])]
         #[Assert\Type(
             type: 'bool',
             message: 'Активность должна быть булевым значением',

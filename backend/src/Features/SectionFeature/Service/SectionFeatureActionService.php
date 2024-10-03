@@ -8,7 +8,6 @@ use App\Features\Properties\Property\Repository\PropertyRepository;
 use App\Features\Section\Repository\SectionRepository;
 use App\Features\SectionFeature\DTO\Message\SectionFeatureMessageDTO;
 use App\Helper\Interface\{ActionInterface, Message\MessageDTOInterface};
-use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
 
 final readonly class SectionFeatureActionService implements ActionInterface
@@ -16,7 +15,6 @@ final readonly class SectionFeatureActionService implements ActionInterface
     public function __construct(
         private PropertyRepository $propertyRepository,
         private SectionRepository $sectionRepository,
-        private DocumentManager $documentManager,
         private LoggerInterface $logger,
     ) {
     }
@@ -60,13 +58,6 @@ final readonly class SectionFeatureActionService implements ActionInterface
 
         $property->removeSectionCodeByCode($section->getCode());
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         return true;
     }
 
@@ -84,13 +75,6 @@ final readonly class SectionFeatureActionService implements ActionInterface
                 sort: $dto->sort
             )
         );
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         return true;
     }

@@ -6,12 +6,14 @@ use App\Helper\Interface\{ActionInterface, Mapper\MapperMessageInterface, Messag
 use App\Document\Accessory\Accessory;
 use App\Features\Accessory\DTO\Message\AccessoryMessageDTO;
 use App\Features\Accessory\Repository\AccessoryRepository;
+use App\Features\Message\Service\MessageValidatorService;
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Section\Repository\SectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final readonly class AccessoryActionService implements ActionInterface
 {
@@ -21,6 +23,7 @@ final readonly class AccessoryActionService implements ActionInterface
         private AccessoryRepository $accessoryRepository,
         private DocumentManager $documentManager,
         private LoggerInterface $logger,
+        private MessageValidatorService $messageValidatorService,
         #[Autowire(service: 'map.category.name.mapper')]
         private MapperMessageInterface $categoryNameMapper,
     ) {
@@ -72,13 +75,6 @@ final readonly class AccessoryActionService implements ActionInterface
 
         $this->documentManager->persist($accessoryDocument);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Accessory created Id: $dto->id. message: " . json_encode($dto));
 
         return true;
@@ -96,7 +92,18 @@ final readonly class AccessoryActionService implements ActionInterface
                 "On update accessory, accessory with external id '$dto->id' not found," .
                 " message: " . json_encode($dto)
             );
-            return false;
+
+            try {
+                $this->messageValidatorService->validateMessageDTO($dto, ['create']);
+            } catch (ValidationFailedException $ex) {
+                $this->logger->error(
+                    'Post update accessory, validation for group create failed: ' . $ex->getMessage(
+                    ) . ", message: " . json_encode($dto)
+                );
+                return false;
+            }
+
+            return $this->create($dto);
         }
 
         $element = null;
@@ -138,13 +145,6 @@ final readonly class AccessoryActionService implements ActionInterface
         $accessoryDocument->setAccessory($accessory);
         $accessoryDocument->setSection($section);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Accessory updated Id: $dto->id. message: " . json_encode($dto));
 
         return true;
@@ -163,13 +163,6 @@ final readonly class AccessoryActionService implements ActionInterface
         }
 
         $this->documentManager->remove($accessoryDocument);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         $this->logger->info("Accessory deleted Id: $dto->id. message: " . json_encode($dto));
 

@@ -6,12 +6,14 @@ use App\Helper\Interface\{ActionInterface, Mapper\MapperMessageInterface, Messag
 use App\Document\Analog\Analog;
 use App\Features\Analog\DTO\Message\AnalogMessageDTO;
 use App\Features\Analog\Repository\AnalogRepository;
+use App\Features\Message\Service\MessageValidatorService;
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Section\Repository\SectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final readonly class AnalogActionService implements ActionInterface
 {
@@ -23,6 +25,7 @@ final readonly class AnalogActionService implements ActionInterface
         private LoggerInterface $logger,
         #[Autowire(service: 'map.category.name.mapper')]
         private MapperMessageInterface $categoryNameMapper,
+        private MessageValidatorService $messageValidatorService,
     ) {
     }
 
@@ -72,13 +75,6 @@ final readonly class AnalogActionService implements ActionInterface
 
         $this->documentManager->persist($analogDocument);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Analog with id '$dto->id' created, message: " . json_encode($dto));
 
         return true;
@@ -93,7 +89,18 @@ final readonly class AnalogActionService implements ActionInterface
                 "On update analog, analog with id '$dto->id' not found," .
                 " message: " . json_encode($dto)
             );
-            return false;
+
+            try {
+                $this->messageValidatorService->validateMessageDTO($dto, ['create']);
+            } catch (ValidationFailedException $ex) {
+                $this->logger->error(
+                    'Post update analog, validation for group create failed: ' . $ex->getMessage(
+                    ) . ", message: " . json_encode($dto)
+                );
+                return false;
+            }
+
+            return $this->create($dto);
         }
 
         $element = null;
@@ -136,13 +143,6 @@ final readonly class AnalogActionService implements ActionInterface
             ->setAnalog($analogProduct)
             ->setSection($section);
 
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Analog with id '$dto->id' updated, message: " . json_encode($dto));
 
         return true;
@@ -161,13 +161,6 @@ final readonly class AnalogActionService implements ActionInterface
         }
 
         $this->documentManager->remove($analog);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
 
         $this->logger->info("Analog with id '$dto->id' deleted, message: " . json_encode($dto));
 

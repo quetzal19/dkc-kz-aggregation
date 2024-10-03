@@ -27,13 +27,6 @@ final readonly class PropertyUnitActionService implements ActionInterface
             return false;
         }
 
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
-        }
-
         $this->logger->info("On create property unit, properties with code '$dto->code' created");
         return true;
     }
@@ -42,13 +35,6 @@ final readonly class PropertyUnitActionService implements ActionInterface
     {
         /** @var PropertyUnitMessageDTO $dto */
         if (!$this->createOrUpdatePropertyNames($dto, 'update')) {
-            return false;
-        }
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
             return false;
         }
 
@@ -66,13 +52,6 @@ final readonly class PropertyUnitActionService implements ActionInterface
 
         foreach ($properties as $property) {
             $property->removeUnit($dto->code);
-        }
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
         }
 
         $this->logger->info("On delete property unit, properties with code '$dto->code' deleted");

@@ -60,7 +60,7 @@ final readonly class ProductMessageDTO implements MessageDTOInterface
         )]
         public mixed $sectionId,
 
-        #[Assert\NotBlank(groups: ['create'])]
+        #[Assert\NotNull(groups: ['create'])]
         #[Assert\Type(
             type: 'bool',
             message: 'Активность должна быть булевым значением',

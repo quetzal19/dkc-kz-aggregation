@@ -3,6 +3,7 @@
 namespace App\Features\Section\Service;
 
 use App\Document\Section\Section;
+use App\Features\Message\Service\MessageValidatorService;
 use App\Features\Section\DTO\Message\SectionMessageDTO;
 use App\Features\Section\Mapper\SectionMapper;
 use App\Features\Section\Repository\SectionRepository;
@@ -12,6 +13,7 @@ use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final readonly class SectionActionService implements ActionInterface
 {
@@ -20,6 +22,7 @@ final readonly class SectionActionService implements ActionInterface
         private LoggerInterface $logger,
         private SectionRepository $repository,
         private DocumentManager $documentManager,
+        private MessageValidatorService $messageValidatorService,
         #[Autowire(service: 'map.section.mapper')]
         private MapperMessageInterface $sectionMapper,
     ) {
@@ -50,14 +53,6 @@ final readonly class SectionActionService implements ActionInterface
         }
 
         $this->documentManager->persist($newSection);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' created");
         return true;
     }
@@ -75,7 +70,18 @@ final readonly class SectionActionService implements ActionInterface
                 "On update section with code '$dto->code' and locale '$dto->locale' section not found," .
                 " message: " . json_encode($dto)
             );
-            return false;
+
+            try {
+                $this->messageValidatorService->validateMessageDTO($dto, ['create']);
+            } catch (ValidationFailedException $ex) {
+                $this->logger->error(
+                    'Post update section, validation for group create failed: ' . $ex->getMessage(
+                    ) . ", message: " . json_encode($dto)
+                );
+                return false;
+            }
+
+            return $this->create($dto);
         }
 
         $this->sectionMapper->mapFromMessageDTO($dto, $section);
@@ -85,14 +91,6 @@ final readonly class SectionActionService implements ActionInterface
         } catch (Exception) {
             return false;
         }
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' updated");
         return true;
     }
@@ -114,14 +112,6 @@ final readonly class SectionActionService implements ActionInterface
         }
 
         $this->documentManager->remove($section);
-
-        try {
-            $this->documentManager->flush();
-        } catch (MongoDBException $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info("Section with code '$dto->code' and locale '$dto->locale' deleted");
         return true;
     }

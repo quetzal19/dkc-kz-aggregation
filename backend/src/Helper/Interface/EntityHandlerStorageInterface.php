@@ -6,5 +6,5 @@ use App\Helper\Interface\Storage\StorageInterface;
 
 interface EntityHandlerStorageInterface
 {
-    public function handle(StorageInterface $storage): bool;
+    public function handle(string $message, string $action): bool;
 }
