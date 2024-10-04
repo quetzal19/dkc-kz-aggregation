@@ -209,6 +209,16 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
                 ->field('element.$id')->equals($productId);
 
         $builder
+            ->lookup(Product::class)
+                ->localField('accessory.$id')
+                ->foreignField('_id')
+                ->alias('accessory');
+
+        $builder
+            ->match()
+                ->field('accessory.locale')->equals(LocaleType::fromString($locale)->value);
+
+        $builder
             ->addFields()
             ->field('filteredName')
             ->filter('$categoryName', 'name', $builder->expr()->eq('$$name.locale', $locale))
