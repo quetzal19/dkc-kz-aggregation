@@ -80,7 +80,7 @@ final readonly class AccessoryService extends AbstractSectionService
             );
         }
 
-        $sections = $this->accessoryRepository->getSections($product->getId(), $locale);
+        $sections = $this->accessoryRepository->getAccessoriesSections($product->getId(), $locale);
 
         $sections = array_column($sections, '_id');
         $sections = array_filter($sections);

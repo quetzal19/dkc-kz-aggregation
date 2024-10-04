@@ -18,4 +18,8 @@ class AccessoryRepository extends AbstractSectionServiceDocumentRepository
         return $this->getActiveProductCodesByProperty($productId, $sectionName, $locale, 'accessory');
     }
 
+    public function getAccessoriesSections(string $productId, string $locale): array
+    {
+        return parent::getSections($productId, $locale, 'accessory');
+    }
 }
