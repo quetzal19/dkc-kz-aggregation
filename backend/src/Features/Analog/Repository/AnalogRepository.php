@@ -17,4 +17,9 @@ class AnalogRepository extends AbstractSectionServiceDocumentRepository
     {
         return $this->getActiveProductCodesByProperty($productId, $sectionName, $locale, 'analog');
     }
+
+    public function getAnalogsSections(string $productId, string $locale): array
+    {
+        return parent::getSections($productId, $locale, 'analog');
+    }
 }

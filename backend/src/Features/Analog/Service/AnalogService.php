@@ -80,10 +80,7 @@ final readonly class AnalogService extends AbstractSectionService
             );
         }
 
-        $sections = $this->analogRepository->getSections(
-            $product->getId(),
-            $locale
-        );
+        $sections = $this->analogRepository->getAnalogsSections($product->getId(), $locale);
 
         $sections = array_column($sections, '_id');
         $sections = array_filter($sections);

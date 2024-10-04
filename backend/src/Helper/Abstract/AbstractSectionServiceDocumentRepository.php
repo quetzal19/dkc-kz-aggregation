@@ -200,7 +200,7 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         return $builder->getAggregation()->getIterator()->toArray();
     }
 
-    public function getSections(string $productId, string $locale): array
+    public function getSections(string $productId, string $locale, string $property): array
     {
         $builder = $this->createAggregationBuilder();
 
@@ -210,13 +210,13 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
 
         $builder
             ->lookup(Product::class)
-                ->localField('accessory.$id')
+                ->localField($property . '.$id')
                 ->foreignField('_id')
-                ->alias('accessory');
+                ->alias($property);
 
         $builder
             ->match()
-                ->field('accessory.locale')->equals(LocaleType::fromString($locale)->value);
+                ->field($property . '.locale')->equals(LocaleType::fromString($locale)->value);
 
         $builder
             ->addFields()
