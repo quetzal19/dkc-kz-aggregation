@@ -64,7 +64,24 @@ final readonly class AccessoryService extends AbstractSectionService
 
     public function getAccessorySections(string $productCode, string $locale): AnalogAccessorySectionDTO
     {
-        $sections = $this->accessoryRepository->getSections($productCode, $locale);
+        $sections = [];
+
+        /** @var Product $product */
+        $product = $this->productRepository->findOneBy(
+            [
+                'code' => $productCode,
+                'locale' => LocaleType::fromString($locale)->value
+            ]
+        );
+
+        if (empty($product)) {
+            return new AnalogAccessorySectionDTO(
+                new AnalogAccessorySectionDataDTO($sections)
+            );
+        }
+
+        $sections = $this->accessoryRepository->getSections($product->getId(), $locale);
+
         $sections = array_column($sections, '_id');
         $sections = array_filter($sections);
         sort($sections);

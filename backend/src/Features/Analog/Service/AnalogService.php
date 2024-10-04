@@ -64,7 +64,26 @@ final readonly class AnalogService extends AbstractSectionService
 
     public function getAnalogSections(string $productCode, string $locale): AnalogAccessorySectionDTO
     {
-        $sections = $this->analogRepository->getSections($productCode, $locale);
+        $sections = [];
+
+        /** @var Product $product */
+        $product = $this->productRepository->findOneBy(
+            [
+                'code' => $productCode,
+                'locale' => LocaleType::fromString($locale)->value
+            ]
+        );
+
+        if (empty($product)) {
+            return new AnalogAccessorySectionDTO(
+                new AnalogAccessorySectionDataDTO($sections)
+            );
+        }
+
+        $sections = $this->analogRepository->getSections(
+            $product->getId(),
+            $locale
+        );
 
         $sections = array_column($sections, '_id');
         $sections = array_filter($sections);

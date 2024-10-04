@@ -200,22 +200,13 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         return $builder->getAggregation()->getIterator()->toArray();
     }
 
-    public function getSections(string $productCode, string $locale): array
+    public function getSections(string $productId, string $locale): array
     {
         $builder = $this->createAggregationBuilder();
 
         $builder
-            ->lookup(Product::class)
-            ->localField('element.$id')
-            ->foreignField('_id')
-            ->alias('product');
-
-        $builder
             ->match()
-            ->field('product.code')
-            ->equals($productCode)
-            ->field('product.active')
-            ->equals(true);
+                ->field('element.$id')->equals($productId);
 
         $builder
             ->addFields()
