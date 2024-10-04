@@ -15,6 +15,28 @@ class TempStorageRepository extends ServiceDocumentRepository
         parent::__construct($registry, TempStorage::class);
     }
 
+    public function removeStoragesWithError(): void
+    {
+        $this->createQueryBuilder()
+            ->remove()
+                ->field('errorMessage')->notEqual(null)
+                ->field('createdAt')->gt(new \DateTime('-2 days'))
+            ->getQuery()
+            ->execute();
+    }
+
+    public function updateStorageCreatedAt(): void
+    {
+        $this->createQueryBuilder()
+            ->updateMany()
+                ->field('createdAt')
+                ->set(new \DateTime())
+                ->field('createdAt')
+                ->equals(null)
+            ->getQuery()
+            ->execute();
+    }
+
     /**
      * @throws MongoDBException
      */
@@ -50,7 +72,9 @@ class TempStorageRepository extends ServiceDocumentRepository
                 ->equals($priorityFilter->entity);
         }
 
-        $builder->sort('timestamp', SortType::ASC->value);
+        $builder
+            ->sort('errorMessage', SortType::ASC->value)
+            ->sort('timestamp', SortType::ASC->value);
 
         if ($paginationDTO = $priorityFilter->paginationDTO) {
             $builder

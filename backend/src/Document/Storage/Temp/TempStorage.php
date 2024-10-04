@@ -2,6 +2,7 @@
 
 namespace App\Document\Storage\Temp;
 
+use App\Document\Storage\Temp\Error\ErrorMessage;
 use App\Features\TempStorage\Repository\TempStorageRepository;
 use App\Helper\Interface\Storage\StorageInterface;
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
@@ -12,6 +13,9 @@ class TempStorage implements StorageInterface
 {
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
     private string $id;
+
+    #[MongoDB\Field(type: Type::DATE, options: ['default' => 'now'])]
+    private ?\DateTime $createdAt;
 
     public function __construct(
         #[MongoDB\Field(type: Type::STRING)]
@@ -31,7 +35,11 @@ class TempStorage implements StorageInterface
 
         #[MongoDB\Field(type: Type::STRING)]
         private string $message,
+
+        #[MongoDB\EmbedOne(targetDocument: ErrorMessage::class)]
+        private ?ErrorMessage $errorMessage = null,
     ) {
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): string
@@ -97,6 +105,28 @@ class TempStorage implements StorageInterface
     public function setActionPriority(int $actionPriority): void
     {
         $this->actionPriority = $actionPriority;
+    }
+
+    public function getErrorMessage(): ?ErrorMessage
+    {
+        return $this->errorMessage;
+    }
+
+    public function setErrorMessage(?ErrorMessage $errorMessage): TempStorage
+    {
+        $this->errorMessage = $errorMessage;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(?\DateTime $createdAt): TempStorage
+    {
+        $this->createdAt = $createdAt;
+        return $this;
     }
 
     public function __toString(): string

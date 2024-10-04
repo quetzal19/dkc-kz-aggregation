@@ -2,9 +2,9 @@
 
 namespace App\Helper\Interface;
 
-use App\Helper\Interface\Storage\StorageInterface;
+use App\Helper\Abstract\Error\AbstractErrorMessage;
 
 interface EntityHandlerStorageInterface
 {
-    public function handle(string $message, string $action): bool;
+    public function handle(string $message, string $action): ?AbstractErrorMessage;
 }

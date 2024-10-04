@@ -2,71 +2,111 @@
 
 namespace App\Features\SectionFeature\Service;
 
+use App\Document\Storage\Temp\Error\ErrorMessage;
+use App\Features\TempStorage\Error\Type\ErrorType;
 use App\Document\Properties\{Property, SectionCode\SectionCode};
-use App\Document\Section\Section;
 use App\Features\Properties\Property\Repository\PropertyRepository;
 use App\Features\Section\Repository\SectionRepository;
 use App\Features\SectionFeature\DTO\Message\SectionFeatureMessageDTO;
 use App\Helper\Interface\{ActionInterface, Message\MessageDTOInterface};
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Helper\Abstract\Error\AbstractErrorMessage;
 
 final readonly class SectionFeatureActionService implements ActionInterface
 {
     public function __construct(
         private PropertyRepository $propertyRepository,
         private SectionRepository $sectionRepository,
+        #[Autowire(service: 'monolog.logger.feature_section')]
         private LoggerInterface $logger,
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): bool
+    public function create(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var SectionFeatureMessageDTO $dto */
-        if (!$this->createOrUpdateSectionFeature($dto, 'create')) {
-            return false;
+        $msg = $this->createOrUpdateSectionFeature($dto, 'create');
+        if (!is_null($msg)) {
+            return $msg;
         }
 
         $this->logger->info(
             "facet_feature_section with code '{$dto->primaryKeys->featureCode}' and section '{$dto->primaryKeys->sectionCode}' created"
         );
 
-        return true;
+        return null;
     }
 
-    public function update(MessageDTOInterface $dto): bool
+    public function update(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var SectionFeatureMessageDTO $dto */
-        if (!$this->createOrUpdateSectionFeature($dto, 'update')) {
-            return false;
+        $msg = $this->createOrUpdateSectionFeature($dto, 'update');
+        if (!is_null($msg)) {
+            return $msg;
         }
 
         $this->logger->info(
             "facet_feature_section with code '{$dto->primaryKeys->featureCode}' and section '{$dto->primaryKeys->sectionCode}' updated"
         );
 
-        return true;
+        return null;
     }
 
-    public function delete(MessageDTOInterface $dto): bool
+    public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var SectionFeatureMessageDTO $dto */
-        $property = $this->getProperty($dto, 'delete');
-        $section = $this->getSection($dto,'delete');
-        if (!$property || !$section) {
-            return false;
+        $property = $this->propertyRepository->findOneBy([
+            'code' => $dto->primaryKeys->featureCode,
+        ]);
+
+        if (!$property) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete facet_feature_section, feature with code '{$dto->primaryKeys->featureCode}' not found,"
+            );
+        }
+
+        $section = $this->sectionRepository->findOneBy([
+            'code' => $dto->primaryKeys->sectionCode,
+        ]);
+
+        if (!$section) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete facet_feature_section, section with code '{$dto->primaryKeys->sectionCode}' not found,"
+            );
         }
 
         $property->removeSectionCodeByCode($section->getCode());
 
-        return true;
+        return null;
     }
 
-    private function createOrUpdateSectionFeature(SectionFeatureMessageDTO $dto, string $fromAction): bool
-    {
-        $property = $this->getProperty($dto, $fromAction);
-        $section = $this->getSection($dto, $fromAction);
-        if (!$property || !$section) {
-            return false;
+    private function createOrUpdateSectionFeature(
+        SectionFeatureMessageDTO $dto,
+        string $fromAction
+    ): ?AbstractErrorMessage {
+        $property = $this->propertyRepository->findOneBy([
+            'code' => $dto->primaryKeys->featureCode,
+        ]);
+
+        if (!$property) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction facet_feature_section, feature with code '{$dto->primaryKeys->featureCode}' not found,"
+            );
+        }
+
+        $section = $this->sectionRepository->findOneBy([
+            'code' => $dto->primaryKeys->sectionCode,
+        ]);
+
+        if (!$section) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction facet_feature_section, section with code '{$dto->primaryKeys->sectionCode}' not found,"
+            );
         }
 
         $property->addOrUpdateSectionCode(
@@ -76,40 +116,6 @@ final readonly class SectionFeatureActionService implements ActionInterface
             )
         );
 
-        return true;
-    }
-
-    private function getProperty(SectionFeatureMessageDTO $dto, string $fromAction): ?Property
-    {
-        $property = $this->propertyRepository->findOneBy([
-            'code' => $dto->primaryKeys->featureCode,
-        ]);
-
-        if (!$property) {
-            $this->logger->error(
-                "On $fromAction facet_feature_section, feature with code '{$dto->primaryKeys->featureCode}' not found," .
-                " message: " . json_encode($dto)
-            );
-            return null;
-        }
-
-        return $property;
-    }
-
-    private function getSection(SectionFeatureMessageDTO $dto, string $fromAction): ?Section
-    {
-        $section = $this->sectionRepository->findOneBy([
-            'code' => $dto->primaryKeys->sectionCode,
-        ]);
-
-        if (!$section) {
-            $this->logger->error(
-                "On $fromAction facet_feature_section, section with code '{$dto->primaryKeys->sectionCode}' not found," .
-                " message: " . json_encode($dto)
-            );
-            return null;
-        }
-
-        return $section;
+        return null;
     }
 }
