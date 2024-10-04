@@ -13,9 +13,9 @@ class AccessoryRepository extends AbstractSectionServiceDocumentRepository
         parent::__construct($registry, Accessory::class);
     }
 
-    public function getActiveAccessories(string $productCode, ?string $sectionName, string $locale): array
+    public function getActiveAccessories(string $productId, ?string $sectionName, string $locale): array
     {
-        return $this->getActiveProductCodesByProperty($productCode, $sectionName, $locale, 'accessory');
+        return $this->getActiveProductCodesByProperty($productId, $sectionName, $locale, 'accessory');
     }
 
 }
