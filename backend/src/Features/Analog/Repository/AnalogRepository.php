@@ -13,8 +13,13 @@ class AnalogRepository extends AbstractSectionServiceDocumentRepository
         parent::__construct($registry, Analog::class);
     }
 
-    public function getActiveAnalogs(string $productCode, ?string $sectionName, string $locale): array
+    public function getActiveAnalogs(string $productId, ?string $sectionName, string $locale): array
     {
-        return $this->getActiveProductCodesByProperty($productCode, $sectionName, $locale, 'analog');
+        return $this->getActiveProductCodesByProperty($productId, $sectionName, $locale, 'analog');
+    }
+
+    public function getAnalogsSections(string $productId, string $locale): array
+    {
+        return parent::getSections($productId, $locale, 'analog');
     }
 }

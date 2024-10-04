@@ -14,48 +14,37 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         parent::__construct($registry, $documentClass);
     }
 
-    protected function getActiveProductCodesByProperty(string $productCode, ?string $sectionName, string $locale, string $property): array
+    protected function getActiveProductCodesByProperty(string $productId, ?string $sectionName, string $locale, string $property): array
     {
         $builder = $this->createAggregationBuilder();
+
+        $builder
+            ->match()
+                ->field('element.$id')->equals($productId)
+                ->field($property)->notEqual(null);
 
         if (!empty($sectionName)) {
             $builder
                 ->match()
-                ->field('categoryName.name')
-                ->equals(new Regex('(^|\s)' . $sectionName . '(\s|$)', 1));
+                    ->field('categoryName.name')->equals($sectionName);
         }
 
         $builder
             ->lookup(Product::class)
-            ->localField('element.$id')
-            ->foreignField('_id')
-            ->alias('element');
+                ->localField( $property . '.$id')
+                ->foreignField('_id')
+                ->alias($property);
 
         $builder
             ->match()
-            ->field('element.code')
-            ->equals($productCode)
-            ->field($property)
-            ->notEqual(null);
-
-        $builder
-            ->lookup(Product::class)
-            ->localField( $property . '.$id')
-            ->foreignField('_id')
-            ->alias($property);
-
-        $builder
-            ->match()
-            ->field($property . '.active')
-            ->equals(true)
-            ->field($property . '.locale')
-            ->equals(LocaleType::fromString($locale)->value);
+                ->field($property . '.active')->equals(true)
+                ->field($property . '.locale')->equals(LocaleType::fromString($locale)->value);
 
         $builder
             ->lookup(Section::class)
-            ->localField($property . '.section.$id')
-            ->foreignField('_id')
-            ->alias('section');
+                ->localField($property . '.section.$id')
+                ->foreignField('_id')
+                ->alias('section');
 
         $builder
             ->unwind('$section');
@@ -117,36 +106,32 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         return $builder->getAggregation()->getIterator()->toArray();
     }
 
-    public function findActiveSectionsByProductCode(string $productCode, ?string $sectionName, string $locale): array
+    public function findActiveSectionsByProductCode(string $productId, ?string $sectionName, string $locale): array
     {
         $builder = $this->createAggregationBuilder();
+
+        $builder
+            ->match()
+                ->field('element.$id')->equals($productId)
+                ->field('section')->notEqual(null);
 
         if (!empty($sectionName)) {
             $builder
                 ->match()
-                ->field('categoryName.name')
-                ->equals(new Regex('(^|\s)' . $sectionName . '(\s|$)', 'i'));
+                    ->field('categoryName.name')->equals($sectionName);
         }
 
         $builder
             ->lookup(Product::class)
-            ->localField('element.$id')
-            ->foreignField('_id')
-            ->alias('element');
+                ->localField('element.$id')
+                ->foreignField('_id')
+                ->alias('element');
 
         $builder
-            ->match()
-            ->field('element.code')
-            ->equals($productCode);
-
-        $builder
-            ->match()
-            ->field('section')
-            ->notEqual(null)
             ->lookup(Section::class)
-            ->localField('section.$id')
-            ->foreignField('_id')
-            ->alias('section')
+                ->localField('section.$id')
+                ->foreignField('_id')
+                ->alias('section')
             ->unwind('$section')
             ->match()
             ->field('section.active')
@@ -215,22 +200,23 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         return $builder->getAggregation()->getIterator()->toArray();
     }
 
-    public function getSections(string $productCode, string $locale): array
+    public function getSections(string $productId, string $locale, string $property): array
     {
         $builder = $this->createAggregationBuilder();
 
         $builder
+            ->match()
+                ->field('element.$id')->equals($productId);
+
+        $builder
             ->lookup(Product::class)
-            ->localField('element.$id')
-            ->foreignField('_id')
-            ->alias('product');
+                ->localField($property . '.$id')
+                ->foreignField('_id')
+                ->alias($property);
 
         $builder
             ->match()
-            ->field('product.code')
-            ->equals($productCode)
-            ->field('product.active')
-            ->equals(true);
+                ->field($property . '.locale')->equals(LocaleType::fromString($locale)->value);
 
         $builder
             ->addFields()

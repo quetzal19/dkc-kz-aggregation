@@ -40,23 +40,33 @@ abstract readonly class AbstractSectionService
         return new AnalogAccessoryProductDTO(data: new AnalogAccessoryProductDataDTO($allProducts, $count));
     }
 
-    protected function getActiveProductsBySections(string $productCode, ?string $sectionName, string $locale): array
+    protected function getActiveProductsBySections(string $productId, ?string $sectionName, string $locale): array
     {
-        $activeSections = $this->getActiveSectionCodes($productCode, $sectionName, $locale);
+        $activeSections = $this->getActiveSectionCodes($productId, $sectionName, $locale);
+
+        if (empty($activeSections)) {
+            return [];
+        }
+
         $activeProductsCodeBySections = $this->productRepository->findActiveBySectionCodes($activeSections, $locale);
 
         return array_column($activeProductsCodeBySections, '_id');
     }
 
-    private function getActiveSectionCodes(string $productCode, ?string $sectionName, string $locale): array
+    private function getActiveSectionCodes(string $productId, ?string $sectionName, string $locale): array
     {
+        $allSections = [];
+
         $sections = $this->sectionServiceDocumentRepository->findActiveSectionsByProductCode(
-            $productCode,
+            $productId,
             $sectionName,
             $locale
         );
 
-        $allSections = [];
+        if (empty($sections)) {
+            return $allSections;
+        }
+
         $sectionRegex = [];
         foreach ($sections as $section) {
             $sectionRegex[] = new Regex(
