@@ -77,7 +77,6 @@ final readonly class ProductMessageDTO implements MessageDTOInterface
         ])]
         public mixed $sort,
 
-        #[Assert\NotBlank(message: 'Вес продукта не может быть пустым', groups: ['create'])]
         #[Assert\Type(type: 'string', message: 'Вес продукта должен быть строкой', groups: ['create', 'update'])]
         #[Assert\Length(
             max: 30,
@@ -86,7 +85,6 @@ final readonly class ProductMessageDTO implements MessageDTOInterface
         )]
         public mixed $weight,
 
-        #[Assert\NotBlank(message: 'Объем продукта не может быть пустым', groups: ['create'])]
         #[Assert\Type(type: 'string', message: 'Объем продукта должен быть строкой', groups: ['create', 'update'])]
         #[Assert\Length(
             max: 30,
