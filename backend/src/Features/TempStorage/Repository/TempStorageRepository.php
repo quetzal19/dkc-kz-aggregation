@@ -20,19 +20,7 @@ class TempStorageRepository extends ServiceDocumentRepository
         $this->createQueryBuilder()
             ->remove()
                 ->field('errorMessage')->notEqual(null)
-                ->field('createdAt')->gt(new \DateTime('-2 days'))
-            ->getQuery()
-            ->execute();
-    }
-
-    public function updateStorageCreatedAt(): void
-    {
-        $this->createQueryBuilder()
-            ->updateMany()
-                ->field('createdAt')
-                ->set(new \DateTime())
-                ->field('createdAt')
-                ->equals(null)
+                ->field('errorDate')->lte(new \DateTime('-2 days'))
             ->getQuery()
             ->execute();
     }
@@ -44,8 +32,8 @@ class TempStorageRepository extends ServiceDocumentRepository
     {
         $this->createQueryBuilder()
             ->remove()
-            ->field('_id')
-            ->in($ids)
+                ->field('_id')
+                ->in($ids)
             ->getQuery()
             ->execute();
     }

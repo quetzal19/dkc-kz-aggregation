@@ -14,8 +14,8 @@ class TempStorage implements StorageInterface
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
     private string $id;
 
-    #[MongoDB\Field(type: Type::DATE, options: ['default' => 'now'])]
-    private ?\DateTime $createdAt;
+    #[MongoDB\Field(type: Type::DATE, nullable: true)]
+    private ?\DateTime $errorDate = null;
 
     public function __construct(
         #[MongoDB\Field(type: Type::STRING)]
@@ -39,7 +39,6 @@ class TempStorage implements StorageInterface
         #[MongoDB\EmbedOne(targetDocument: ErrorMessage::class)]
         private ?ErrorMessage $errorMessage = null,
     ) {
-        $this->createdAt = new \DateTime();
     }
 
     public function getId(): string
@@ -118,14 +117,14 @@ class TempStorage implements StorageInterface
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTime
+    public function getErrorDate(): ?\DateTime
     {
-        return $this->createdAt;
+        return $this->errorDate;
     }
 
-    public function setCreatedAt(?\DateTime $createdAt): TempStorage
+    public function setErrorDate(?\DateTime $errorDate): TempStorage
     {
-        $this->createdAt = $createdAt;
+        $this->errorDate = $errorDate;
         return $this;
     }
 

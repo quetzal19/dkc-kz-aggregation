@@ -2,8 +2,7 @@
 
 namespace App\Command;
 
-use App\Document\Storage\Temp\Error\ErrorMessage;
-use App\Document\Storage\Temp\TempStorage;
+use App\Document\Storage\Temp\{Error\ErrorMessage, TempStorage};
 use App\Features\TempStorage\Error\Type\ErrorType;
 use App\Features\TempStorage\Repository\TempStorageRepository;
 use App\Helper\Locator\Logger\EntityLoggerLocator;
@@ -161,6 +160,9 @@ final class ProcessingDataFromTempStorageCommand extends Command
                  * @var ErrorMessage $error
                  */
                 $storage = $this->storageRepository->find($storageId);
+                if (is_null($storage->getErrorDate())) {
+                    $storage->setErrorDate(new \DateTime());
+                }
                 $storage->setErrorMessage($error);
             }
 
@@ -172,11 +174,12 @@ final class ProcessingDataFromTempStorageCommand extends Command
 
             try {
                 $this->documentManager->flush();
-                $io->info("Removed tempStorage flushed");
+                $io->info("Flushed deleted tempStorage");
             } catch (MongoDBException $e) {
                 $this->logger->error($e->getMessage());
                 $io->error("Error flush exception: " . $e->getMessage());
             }
+
             $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
 
             $this->documentManager->clear();
