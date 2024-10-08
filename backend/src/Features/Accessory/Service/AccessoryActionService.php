@@ -152,17 +152,9 @@ final readonly class AccessoryActionService implements ActionInterface
     public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AccessoryMessageDTO $dto */
-        $accessoryDocument = $this->accessoryRepository->findOneBy(['externalId' => $dto->id]);
-        if (!$accessoryDocument) {
-            return new ErrorMessage(
-                ErrorType::ENTITY_NOT_FOUND,
-                "On delete accessory, accessory with external id '$dto->id' not found"
-            );
-        }
+        $this->accessoryRepository->markAsDeleted($dto->id);
 
-        $this->documentManager->remove($accessoryDocument);
-
-        $this->logger->info("Accessory deleted Id: $dto->id. message: " . json_encode($dto));
+        $this->logger->info("Accessory with id '$dto->id' marked as deleted");
 
         return null;
     }

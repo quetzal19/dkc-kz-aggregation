@@ -10,11 +10,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
+#[MongoDB\Index(keys: ['externalId' => 'asc'])]
 #[MongoDB\Document(repositoryClass: AccessoryRepository::class)]
 class Accessory
 {
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
     private string $id;
+
+    #[MongoDB\Field(type: Type::BOOL, nullable: true)]
+    private ?bool $isDeleted = null;
 
     public function __construct(
         #[MongoDB\Field(type: Type::STRING)]
@@ -97,6 +101,17 @@ class Accessory
     public function setCategoryName(Collection $categoryName): Accessory
     {
         $this->categoryName = $categoryName;
+        return $this;
+    }
+
+    public function getIsDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(?bool $isDeleted): Accessory
+    {
+        $this->isDeleted = $isDeleted;
         return $this;
     }
 
