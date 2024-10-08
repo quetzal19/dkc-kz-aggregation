@@ -9,11 +9,15 @@ use App\Features\Analog\Repository\AnalogRepository;
 use Doctrine\Common\{Collections\ArrayCollection, Collections\Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
+#[MongoDB\Index(keys: ['externalId' => 'asc'])]
 #[MongoDB\Document(repositoryClass: AnalogRepository::class)]
 class Analog
 {
     #[MongoDB\Id(type: Type::STRING, strategy: 'UUID')]
     private string $id;
+
+    #[MongoDB\Field(type: Type::BOOL, nullable: true)]
+    private ?bool $isDeleted = null;
 
     public function __construct(
         #[MongoDB\Field(type: Type::STRING)]
@@ -99,5 +103,14 @@ class Analog
         return $this;
     }
 
+    public function getIsDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
 
+    public function setIsDeleted(?bool $isDeleted): Analog
+    {
+        $this->isDeleted = $isDeleted;
+        return $this;
+    }
 }

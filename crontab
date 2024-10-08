@@ -9,3 +9,6 @@
 
 # Очистка ошибочных записей временного хранилища
 0 0 * * * cd backend && /usr/local/bin/php bin/console cron:remove-temp-storage-with-error
+
+# Удаление помеченных записей
+* * * * * if [ $(ps aux | grep 'processing:remove_marked_deleted_entities' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:remove_marked_deleted_entities > var/log/cron-deleted-entities.log; fi

@@ -7,11 +7,30 @@ use App\Document\{Product\Product, Section\Section};
 use App\Helper\Enum\LocaleType;
 use Doctrine\Bundle\MongoDBBundle\{ManagerRegistry, Repository\ServiceDocumentRepository};
 
-abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentRepository
+abstract class AbstractAnalogAccessoryRepository extends ServiceDocumentRepository
 {
     public function __construct(ManagerRegistry $registry, string $documentClass)
     {
         parent::__construct($registry, $documentClass);
+    }
+
+    public function deleteMarked(): void
+    {
+        $this->createQueryBuilder()
+            ->remove()
+                ->field('isDeleted')->equals(true)
+            ->getQuery()
+            ->execute();
+    }
+
+    public function markAsDeleted(string $id): void
+    {
+        $this->createQueryBuilder()
+            ->updateOne()
+                ->field('externalId')->equals($id)
+                ->field('isDeleted')->set(true)
+            ->getQuery()
+            ->execute();
     }
 
     protected function getActiveProductCodesByProperty(string $productId, ?string $sectionName, string $locale, string $property): array
@@ -21,7 +40,8 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         $builder
             ->match()
                 ->field('element.$id')->equals($productId)
-                ->field($property)->notEqual(null);
+                ->field($property)->notEqual(null)
+                ->field('isDeleted')->notEqual(true);
 
         if (!empty($sectionName)) {
             $builder
@@ -113,7 +133,8 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
         $builder
             ->match()
                 ->field('element.$id')->equals($productId)
-                ->field('section')->notEqual(null);
+                ->field('section')->notEqual(null)
+                ->field('isDeleted')->notEqual(true);
 
         if (!empty($sectionName)) {
             $builder
@@ -206,7 +227,8 @@ abstract class AbstractSectionServiceDocumentRepository extends ServiceDocumentR
 
         $builder
             ->match()
-                ->field('element.$id')->equals($productId);
+                ->field('element.$id')->equals($productId)
+                ->field('isDeleted')->notEqual(true);
 
         $builder
             ->lookup(Product::class)

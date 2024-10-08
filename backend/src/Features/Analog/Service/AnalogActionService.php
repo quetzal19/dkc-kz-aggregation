@@ -149,17 +149,9 @@ final readonly class AnalogActionService implements ActionInterface
     public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AnalogMessageDTO $dto */
-        $analog = $this->analogRepository->findOneBy(['externalId' => $dto->id]);
-        if (!$analog) {
-            return new ErrorMessage(
-                ErrorType::ENTITY_NOT_FOUND,
-                "On delete analog, analog with id '$dto->id' not found"
-            );
-        }
+        $this->analogRepository->markAsDeleted($dto->id);
 
-        $this->documentManager->remove($analog);
-
-        $this->logger->info("Analog with id '$dto->id' deleted, message: " . json_encode($dto));
+        $this->logger->info("Analog with id '$dto->id' marked as deleted");
 
         return null;
     }
