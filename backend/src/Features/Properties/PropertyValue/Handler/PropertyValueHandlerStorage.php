@@ -6,7 +6,6 @@ use App\Features\Message\Service\MessageService;
 use App\Features\Properties\PropertyValue\DTO\Message\PropertyValueMessageDTO;
 use App\Features\Properties\PropertyValue\Service\PropertyValueActionService;
 use App\Helper\Abstract\AbstractEntityHandlerStorage;
-use Psr\Log\LoggerInterface;
 
 final readonly class PropertyValueHandlerStorage extends AbstractEntityHandlerStorage
 {
@@ -15,11 +14,9 @@ final readonly class PropertyValueHandlerStorage extends AbstractEntityHandlerSt
     public function __construct(
         PropertyValueActionService $actionService,
         MessageService $messageService,
-        LoggerInterface $logger
     ) {
         parent::__construct(
             $actionService,
-            $logger,
             $messageService,
             PropertyValueMessageDTO::class,
             self::ENTITY_NAME

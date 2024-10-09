@@ -3,51 +3,65 @@
 namespace App\Features\Properties\PropertyUnit\Service;
 
 use App\Helper\Interface\{ActionInterface, Message\MessageDTOInterface};
+use App\Document\Storage\Temp\Error\ErrorMessage;
+use App\Features\TempStorage\Error\Type\ErrorType;
 use App\Document\Properties\{Name\PropertyName, Property};
 use App\Features\Properties\Property\Repository\PropertyRepository;
 use App\Features\Properties\PropertyName\DTO\Message\PropertyNameMessageDTO;
 use App\Features\Properties\PropertyUnit\DTO\Message\PropertyUnitMessageDTO;
 use Doctrine\Common\Collections\{ArrayCollection, Collection};
-use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Helper\Abstract\Error\AbstractErrorMessage;
 
 final readonly class PropertyUnitActionService implements ActionInterface
 {
     public function __construct(
         private PropertyRepository $propertyRepository,
-        private DocumentManager $documentManager,
+        #[Autowire(service: 'monolog.logger.property_unit')]
         private LoggerInterface $logger,
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): bool
+    public function create(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var PropertyUnitMessageDTO $dto */
-        if (!$this->createOrUpdatePropertyNames($dto, 'create')) {
-            return false;
+        $message = $this->createOrUpdatePropertyNames($dto, 'create');
+        if (!is_null($message)) {
+            return $message;
         }
 
         $this->logger->info("On create property unit, properties with code '$dto->code' created");
-        return true;
+        return null;
     }
 
-    public function update(MessageDTOInterface $dto): bool
+    public function update(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var PropertyUnitMessageDTO $dto */
-        if (!$this->createOrUpdatePropertyNames($dto, 'update')) {
-            return false;
+        $message = $this->createOrUpdatePropertyNames($dto, 'update');
+        if (!is_null($message)) {
+            return $message;
         }
 
         $this->logger->info("On update property unit, properties with code '$dto->code' updated");
-        return true;
+        return null;
     }
 
-    public function delete(MessageDTOInterface $dto): bool
+    public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
-        /** @var PropertyUnitMessageDTO $dto */
-        $properties = $this->getProperties($dto, 'delete');
-        if (is_null($properties)) {
-            return false;
+        /**
+         * @var PropertyUnitMessageDTO $dto
+         * @var Property[] $properties
+         */
+        $properties = $this->propertyRepository->findBy([
+            'units.code' => $dto->code
+        ]);
+
+        if (empty($properties)) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete property unit, properties with code '$dto->code' not found",
+            );
         }
 
         foreach ($properties as $property) {
@@ -55,14 +69,21 @@ final readonly class PropertyUnitActionService implements ActionInterface
         }
 
         $this->logger->info("On delete property unit, properties with code '$dto->code' deleted");
-        return true;
+        return null;
     }
 
-    private function createOrUpdatePropertyNames(PropertyUnitMessageDTO $dto, string $fromAction): bool
+    private function createOrUpdatePropertyNames(PropertyUnitMessageDTO $dto, string $fromAction): ?AbstractErrorMessage
     {
-        $properties = $this->getProperties($dto, $fromAction);
-        if (is_null($properties)) {
-            return false;
+        /** @var Property[] $properties */
+        $properties = $this->propertyRepository->findBy([
+            'units.code' => $dto->code
+        ]);
+
+        if (empty($properties)) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction property unit, properties with code '$dto->code' not found"
+            );
         }
 
         $names = $this->getPropertyNamesCollectionByDTO($dto->names);
@@ -71,25 +92,7 @@ final readonly class PropertyUnitActionService implements ActionInterface
             $property->addOrUpdateUnit($dto->code, $names);
         }
 
-        return true;
-    }
-
-    private function getProperties(PropertyUnitMessageDTO $dto, string $fromAction): ?array
-    {
-        /** @var Property[] $properties */
-        $properties = $this->propertyRepository->findBy([
-            'units.code' => $dto->code
-        ]);
-
-        if (empty($properties)) {
-            $this->logger->error(
-                "On $fromAction property unit, properties with code '$dto->code' not found," .
-                ' message: ' . json_encode($dto),
-            );
-            return null;
-        }
-
-        return $properties;
+        return null;
     }
 
     /**

@@ -4,16 +4,19 @@ namespace App\Features\Analog\Service;
 
 use App\Helper\Interface\{ActionInterface, Mapper\MapperMessageInterface, Message\MessageDTOInterface};
 use App\Document\Analog\Analog;
+use App\Document\Storage\Temp\Error\ErrorMessage;
 use App\Features\Analog\DTO\Message\AnalogMessageDTO;
 use App\Features\Analog\Repository\AnalogRepository;
 use App\Features\Message\Service\MessageValidatorService;
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Section\Repository\SectionRepository;
+use App\Features\TempStorage\Error\Type\ErrorType;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
+use App\Helper\Abstract\Error\AbstractErrorMessage;
 
 final readonly class AnalogActionService implements ActionInterface
 {
@@ -22,6 +25,7 @@ final readonly class AnalogActionService implements ActionInterface
         private SectionRepository $sectionRepository,
         private AnalogRepository $analogRepository,
         private DocumentManager $documentManager,
+        #[Autowire(service: 'monolog.logger.analogs')]
         private LoggerInterface $logger,
         #[Autowire(service: 'map.category.name.mapper')]
         private MapperMessageInterface $categoryNameMapper,
@@ -29,34 +33,31 @@ final readonly class AnalogActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): bool
+    public function create(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AnalogMessageDTO $dto */
         $analogDocument = $this->analogRepository->findOneBy(['externalId' => $dto->id]);
         if ($analogDocument) {
-            $this->logger->error(
-                "On create analog, analog with id '$dto->id' already exists," .
-                " message: " . json_encode($dto)
+            return new ErrorMessage(
+                ErrorType::ENTITY_ALREADY_EXISTS,
+                "On create analog, analog with id '$dto->id' already exists"
             );
-            return false;
         }
 
         $element = $this->productRepository->findOneBy(['code' => $dto->elementCode]);
         if (!$element) {
-            $this->logger->error(
-                "On create analog, element with code '$dto->elementCode' not found," .
-                " message: " . json_encode($dto)
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On create analog, element with code '$dto->elementCode' not found"
             );
-            return false;
         }
         $analog = $this->productRepository->findOneBy(['code' => $dto->analogCode]);
         $section = $this->sectionRepository->findOneBy(['code' => $dto->sectionCode]);
         if (!$section && !$analog) {
-            $this->logger->error(
-                "On create analog, section with code '$dto->sectionCode' or analog with code '$dto->analogCode' not found," .
-                " message: " . json_encode($dto)
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On create analog, section with code '$dto->sectionCode' or analog with code '$dto->analogCode' not found"
             );
-            return false;
         }
 
         $collectionCategory = new ArrayCollection();
@@ -77,15 +78,15 @@ final readonly class AnalogActionService implements ActionInterface
 
         $this->logger->info("Analog with id '$dto->id' created, message: " . json_encode($dto));
 
-        return true;
+        return null;
     }
 
-    public function update(MessageDTOInterface $dto): bool
+    public function update(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AnalogMessageDTO $dto */
         $analog = $this->analogRepository->findOneBy(['externalId' => $dto->id]);
         if (!$analog) {
-            $this->logger->error(
+            $this->logger->warning(
                 "On update analog, analog with id '$dto->id' not found," .
                 " message: " . json_encode($dto)
             );
@@ -93,11 +94,10 @@ final readonly class AnalogActionService implements ActionInterface
             try {
                 $this->messageValidatorService->validateMessageDTO($dto, ['create']);
             } catch (ValidationFailedException $ex) {
-                $this->logger->error(
-                    'Post update analog, validation for group create failed: ' . $ex->getMessage(
-                    ) . ", message: " . json_encode($dto)
+                return new ErrorMessage(
+                    ErrorType::VALIDATION_ERROR,
+                    'Post update analog, validation for group create failed: ' . $ex->getMessage()
                 );
-                return false;
             }
 
             return $this->create($dto);
@@ -107,22 +107,20 @@ final readonly class AnalogActionService implements ActionInterface
         if (!empty($dto->elementCode)) {
             $element = $this->productRepository->findOneBy(['code' => $dto->elementCode]);
             if (!$element) {
-                $this->logger->error(
-                    "On update analog, element with code '$dto->elementCode' not found," .
-                    " message: " . json_encode($dto)
+                return new ErrorMessage(
+                    ErrorType::DATA_NOT_READY,
+                    "On update analog, element with code '$dto->elementCode' not found"
                 );
-                return false;
             }
         }
 
         $analogProduct = $this->productRepository->findOneBy(['code' => $dto->analogCode]);
         $section = $this->sectionRepository->findOneBy(['code' => $dto->sectionCode]);
         if (!$section && !$analogProduct) {
-            $this->logger->error(
-                "On update analog, section with code '$dto->sectionCode' or analog with code '$dto->analogCode' not found," .
-                " message: " . json_encode($dto)
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On update analog, section with code '$dto->sectionCode' or analog with code '$dto->analogCode' not found"
             );
-            return false;
         }
 
         $collectionCategory = new ArrayCollection();
@@ -145,25 +143,16 @@ final readonly class AnalogActionService implements ActionInterface
 
         $this->logger->info("Analog with id '$dto->id' updated, message: " . json_encode($dto));
 
-        return true;
+        return null;
     }
 
-    public function delete(MessageDTOInterface $dto): bool
+    public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AnalogMessageDTO $dto */
-        $analog = $this->analogRepository->findOneBy(['externalId' => $dto->id]);
-        if (!$analog) {
-            $this->logger->error(
-                "On delete analog, analog with id '$dto->id' not found," .
-                " message: " . json_encode($dto)
-            );
-            return false;
-        }
+        $this->analogRepository->markAsDeleted($dto->id);
 
-        $this->documentManager->remove($analog);
+        $this->logger->info("Analog with id '$dto->id' marked as deleted");
 
-        $this->logger->info("Analog with id '$dto->id' deleted, message: " . json_encode($dto));
-
-        return true;
+        return null;
     }
 }

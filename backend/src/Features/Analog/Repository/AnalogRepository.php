@@ -3,10 +3,10 @@
 namespace App\Features\Analog\Repository;
 
 use App\Document\Analog\Analog;
-use App\Helper\Abstract\AbstractSectionServiceDocumentRepository;
+use App\Helper\Abstract\AbstractAnalogAccessoryRepository;
 use Doctrine\Bundle\MongoDBBundle\ManagerRegistry;
 
-class AnalogRepository extends AbstractSectionServiceDocumentRepository
+class AnalogRepository extends AbstractAnalogAccessoryRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

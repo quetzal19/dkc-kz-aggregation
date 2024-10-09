@@ -13,7 +13,7 @@ use MongoDB\BSON\Regex;
 abstract readonly class AbstractSectionService
 {
     public function __construct(
-        private AbstractSectionServiceDocumentRepository $sectionServiceDocumentRepository,
+        private AbstractAnalogAccessoryRepository $sectionServiceDocumentRepository,
         protected SectionRepository $sectionRepository,
         protected ProductRepository $productRepository,
     ) {

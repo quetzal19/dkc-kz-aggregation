@@ -2,7 +2,10 @@
 
 namespace App\Command;
 
+use App\Document\Storage\Temp\{Error\ErrorMessage, TempStorage};
+use App\Features\TempStorage\Error\Type\ErrorType;
 use App\Features\TempStorage\Repository\TempStorageRepository;
+use App\Helper\Locator\Logger\EntityLoggerLocator;
 use App\Features\Priority\{Builder\PriorityFilterBuilder, Service\PriorityService};
 use App\Helper\Locator\Storage\ServiceHandlerStorageLocator;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
@@ -11,7 +14,8 @@ use Symfony\Component\Console\{Attribute\AsCommand,
     Command\Command,
     Input\InputArgument,
     Input\InputInterface,
-    Output\OutputInterface
+    Output\OutputInterface,
+    Style\SymfonyStyle
 };
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -23,6 +27,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final class ProcessingDataFromTempStorageCommand extends Command
 {
     public function __construct(
+        private readonly EntityLoggerLocator $loggerLocator,
         private readonly PriorityService $priorityService,
         private readonly ServiceHandlerStorageLocator $locator,
         private readonly LoggerInterface $logger,
@@ -44,9 +49,9 @@ final class ProcessingDataFromTempStorageCommand extends Command
             2500
         );
         $this->addArgument(
-            'entity',
-            InputArgument::OPTIONAL,
-            'Entity to process',
+            'entities',
+            InputArgument::IS_ARRAY,
+            'Entities to process',
         );
     }
 
@@ -62,23 +67,36 @@ final class ProcessingDataFromTempStorageCommand extends Command
         arsort($entities);
         $entityNames = array_keys($entities);
 
-        $entity = $input->getArgument('entity');
+        $entities = $input->getArgument('entities');
 
-        if (!empty($entity)) {
-            if (!in_array($entity, $entityNames)) {
-                $output->writeln('Entity is not valid: ' . $entity);
-                return Command::FAILURE;
+        if (!empty($entities)) {
+            foreach ($entities as $entity) {
+                if (!in_array($entity, $entityNames)) {
+                    $output->writeln('Entity is not valid: ' . $entity);
+                    return Command::FAILURE;
+                }
             }
 
-            $entityNames = [$entity];
+            $entityNames = $entities;
         }
 
+        $io = new SymfonyStyle($input, $output);
+        $io->info("before processing memory usage: " . $this->getCurrentMemoryUsage());
 
         foreach ($entityNames as $entity) {
+            $io->title("START PROCESSING ENTITY: " . mb_strtoupper($entity) . ", LIMIT: $limit");
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
             $handler = $this->locator->getHandler($entity);
+            $entityLogger = $this->loggerLocator->getLogger($entity);
 
             if (!$handler) {
                 $this->logger->warning('Handler not found: ' . $entity);
+                continue;
+            }
+
+            if (!$entityLogger) {
+                $this->logger->warning('Logger not found for entity: ' . $entity);
                 continue;
             }
 
@@ -88,23 +106,64 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 ->build();
 
             try {
+                $io->info("Fetching max priority data");
+                $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
                 $priorityData = $this->priorityService->getMaxPriorityData($filter);
+
+                $io->info("Data successfully fetched");
+                $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
             } catch (\Exception $e) {
                 $this->logger->error($e->getMessage());
                 continue;
             }
 
-            $storageIds = [];
+            $io->info("Start handle data");
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
+            [$storageIds, $storageErrors] = [[], []];
+            [$totalCount, $successfullyCount] = [0, 0];
             foreach ($priorityData as $storage) {
-                if ($handler->handle($storage['message'], $storage['action'])) {
+                $errorMessage = $handler->handle($storage['message'], $storage['action']);
+                if ($errorMessage) {
+                    $entityLogger->error($errorMessage->message);
+
+                    if (in_array($errorMessage->errorType, ErrorType::getTypesForRemoveStorage())) {
+                        $storageIds[] = $storage['_id'];
+                    } else {
+                        $storageErrors[$storage['_id']] = $errorMessage;
+                    }
+                } else {
                     $storageIds[] = $storage['_id'];
+                    $successfullyCount++;
                 }
+
+                $totalCount++;
             }
+
+            $io->info("Handled entity, totalCount: $totalCount successfully: $successfullyCount");
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
 
             try {
                 $this->documentManager->flush();
+                $io->info("Entities flushed");
             } catch (MongoDBException $e) {
                 $this->logger->error($e->getMessage());
+                $io->error("Error flush exception: " . $e->getMessage());
+            }
+
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
+            foreach ($storageErrors as $storageId => $error) {
+                /**
+                 * @var TempStorage $storage
+                 * @var ErrorMessage $error
+                 */
+                $storage = $this->storageRepository->find($storageId);
+                if (is_null($storage->getErrorDate())) {
+                    $storage->setErrorDate(new \DateTime());
+                }
+                $storage->setErrorMessage($error);
             }
 
             try {
@@ -113,11 +172,28 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 $this->logger->error($e->getMessage());
             }
 
+            try {
+                $this->documentManager->flush();
+                $io->info("Flushed deleted tempStorage");
+            } catch (MongoDBException $e) {
+                $this->logger->error($e->getMessage());
+                $io->error("Error flush exception: " . $e->getMessage());
+            }
+
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
             $this->documentManager->clear();
+
+            $io->info("Entity processing finished");
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
         }
 
 
         return Command::SUCCESS;
     }
 
+    private function getCurrentMemoryUsage(): string
+    {
+        return round(memory_get_usage() / 1_048_576.2, 1) . " MB";
+    }
 }

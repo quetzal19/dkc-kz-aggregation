@@ -5,4 +5,10 @@
 * * * * * if [ $(ps aux | grep 'b_iblock_element' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 10000 b_iblock_element > var/log/cron-data-from-temp-storage.log; fi
 
 # Обработка очереди
-* * * * * if [ $(ps aux | grep 'messenger:consume messages' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console messenger:consume messages --limit=1000 > var/log/cron-amqp.log; fi
+* * * * * if [ $(ps aux | grep 'messenger:consume messages' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console messenger:consume messages --limit=50000 > var/log/cron-amqp.log; fi
+
+# Очистка ошибочных записей временного хранилища
+0 0 * * * cd backend && /usr/local/bin/php bin/console cron:remove-temp-storage-with-error
+
+# Удаление помеченных записей
+* * * * * if [ $(ps aux | grep 'processing:remove_marked_deleted_entities' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:remove_marked_deleted_entities > var/log/cron-deleted-entities.log; fi

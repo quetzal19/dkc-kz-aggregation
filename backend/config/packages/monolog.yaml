@@ -4,6 +4,7 @@ monolog:
 
 when@dev:
     monolog:
+        channels: ["section", "product", "property_feature", "property_value", "product_feature", "art_class_feature_map", "property_unit", "feature_section", "analogs", "accessories"]
         handlers:
             main:
                 type: rotating_file
@@ -20,6 +21,66 @@ when@dev:
                 type: rotating_file
                 process_psr_3_messages: false
                 channels: ["!event", "!doctrine", "!console"]
+                max_files: 7
+            section:
+                type: rotating_file
+                level: info
+                path: "%kernel.logs_dir%/section.log"
+                channels: ["section"]
+                max_files: 7
+            product:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/product.log'
+                channels: ["product"]
+                max_files: 7
+            propertyFeature:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/propertyFeature.log'
+                channels: ["property_feature"]
+                max_files: 7
+            propertyValue:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/propertyValue.log'
+                channels: ["property_value"]
+                max_files: 7
+            product_feature:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/product_feature.log'
+                channels: ["product_feature"]
+                max_files: 7
+            artClassFeatureMap:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/art_class_feature_map.log'
+                channels: ["art_class_feature_map"]
+                max_files: 7
+            propertyUnit:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/property_unit.log'
+                channels: ["property_unit"]
+                max_files: 7
+            featureSection:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/feature_section.log'
+                channels: ["feature_section"]
+                max_files: 7
+            analogs:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/analogs.log'
+                channels: ["analogs"]
+                max_files: 7
+            accessories:
+                type: rotating_file
+                level: info
+                path: '%kernel.logs_dir%/accessories.log'
+                channels: ["accessories"]
                 max_files: 7
 
 when@test:
