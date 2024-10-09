@@ -1,8 +1,8 @@
 # Обработка данных из временного хранилища
-* * * * * if [ $(ps aux | grep 'hl_analogs' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 10000 hl_analogs > var/log/cron-data-from-temp-storage.log; fi
-* * * * * if [ $(ps aux | grep 'hl_accessories' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 10000 hl_accessories > var/log/cron-data-from-temp-storage.log; fi
-* * * * * if [ $(ps aux | grep 'b_iblock_section' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 10000 b_iblock_section > var/log/cron-data-from-temp-storage.log; fi
-* * * * * if [ $(ps aux | grep 'b_iblock_element' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 10000 b_iblock_element > var/log/cron-data-from-temp-storage.log; fi
+* * * * * if [ $(ps aux | grep 'hl_analogs' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 2000 1 5 10 hl_analogs > var/log/cron-data-from-temp-storage.log; fi
+* * * * * if [ $(ps aux | grep 'hl_accessories' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 2000 1 5 10 hl_accessories > var/log/cron-data-from-temp-storage.log; fi
+* * * * * if [ $(ps aux | grep 'b_iblock_section' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 2000 1 5 10 b_iblock_section > var/log/cron-data-from-temp-storage.log; fi
+* * * * * if [ $(ps aux | grep 'b_iblock_element' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console processing:data-from-temp-storage 2000 1 5 10 b_iblock_element > var/log/cron-data-from-temp-storage.log; fi
 
 # Обработка очереди
 * * * * * if [ $(ps aux | grep 'messenger:consume messages' | grep -v grep | wc -l | tr -s "\n") -lt 1 ]; then cd backend && /usr/local/bin/php bin/console messenger:consume messages --limit=50000 > var/log/cron-amqp.log; fi

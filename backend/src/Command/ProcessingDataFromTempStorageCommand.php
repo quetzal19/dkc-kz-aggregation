@@ -215,7 +215,7 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 $storage->setErrorMessage($error);
             }
 
-            if(!empty($storageIds)) {
+            if (!empty($storageIds)) {
                 try {
                     $this->storageRepository->deleteByIds($storageIds);
                 } catch (MongoDBException $e) {
