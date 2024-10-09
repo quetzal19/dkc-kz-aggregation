@@ -61,8 +61,11 @@ class TempStorageRepository extends ServiceDocumentRepository
         }
 
         $builder
-            ->sort('errorMessage', SortType::ASC->value)
-            ->sort('timestamp', SortType::ASC->value);
+            ->sort([
+                'errorMessage' => SortType::ASC->value,
+                'timestamp' => SortType::ASC->value,
+                '_id' => SortType::ASC->value
+            ]);
 
         if ($paginationDTO = $priorityFilter->paginationDTO) {
             $builder
