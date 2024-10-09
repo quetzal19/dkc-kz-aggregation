@@ -21,7 +21,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\PhpSubprocess;
 
 #[AsCommand(
-        name: 'processing:data-from-temp-storage',
+    name: 'processing:data-from-temp-storage',
     description: 'Processing data from temp storage',
     aliases: ['processing:data-from-temp-storage']
 )]
@@ -134,20 +134,6 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 continue;
             }
 
-            $subProcesses = [];
-            if ($pageIndex == 1) {
-                $pageIndex = 1;
-                for ($i = 1; $i < $numberProcess; $i++) {
-                    $pageIndex++;
-                    $process = new PhpSubprocess(
-                        ['bin/console', 'processing:data-from-temp-storage', $limit, $pageIndex, 1, $timeout, $entity],
-                        timeout: $timeout * 60
-                    );
-                    $process->start();
-                    $subProcesses[] = $process;
-                }
-            }
-
             $filter = PriorityFilterBuilder::create()
                 ->setEntity($entity)
                 ->setPagination($pageIndex, $limit)
@@ -164,6 +150,21 @@ final class ProcessingDataFromTempStorageCommand extends Command
             } catch (\Exception $e) {
                 $this->logger->error($e->getMessage());
                 continue;
+            }
+
+            $subProcesses = [];
+            if ($numberProcess > 1) {
+                $pageIndex = 1;
+                for ($i = 1; $i < $numberProcess; $i++) {
+                    $pageIndex++;
+                    $process = new PhpSubprocess(
+                        ['bin/console', 'processing:data-from-temp-storage', $limit, $pageIndex, 1, $timeout, $entity],
+                        timeout: $timeout * 60
+                    );
+                    $process->start();
+                    $subProcesses[] = $process;
+                }
+                $pageIndex = 1;
             }
 
             $io->info("Start handle data");
@@ -214,10 +215,12 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 $storage->setErrorMessage($error);
             }
 
-            try {
-                $this->storageRepository->deleteByIds($storageIds);
-            } catch (MongoDBException $e) {
-                $this->logger->error($e->getMessage());
+            if(!empty($storageIds)) {
+                try {
+                    $this->storageRepository->deleteByIds($storageIds);
+                } catch (MongoDBException $e) {
+                    $this->logger->error($e->getMessage());
+                }
             }
 
             try {
