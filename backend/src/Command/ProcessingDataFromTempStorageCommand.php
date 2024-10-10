@@ -18,6 +18,7 @@ use Symfony\Component\Console\{Attribute\AsCommand,
     Style\SymfonyStyle
 };
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Process\PhpSubprocess;
 
 #[AsCommand(
     name: 'processing:data-from-temp-storage',
@@ -49,6 +50,24 @@ final class ProcessingDataFromTempStorageCommand extends Command
             2500
         );
         $this->addArgument(
+            'pageIndex',
+            InputArgument::OPTIONAL,
+            'Page index of messages to process',
+            1,
+        );
+        $this->addArgument(
+            'number',
+            InputArgument::OPTIONAL,
+            'Number of processes to run',
+            10
+        );
+        $this->addArgument(
+            'timeout',
+            InputArgument::OPTIONAL,
+            'Timeout of messages to process in minutes',
+            10
+        );
+        $this->addArgument(
             'entities',
             InputArgument::IS_ARRAY,
             'Entities to process',
@@ -58,8 +77,23 @@ final class ProcessingDataFromTempStorageCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $limit = $input->getArgument('limit');
-        if (!is_numeric($limit) || $limit < 1) {
+        if (!$this->isValidNumeric($limit)) {
             $output->writeln('Limit is not valid: ' . $limit);
+            return Command::FAILURE;
+        }
+        $pageIndex = $input->getArgument('pageIndex');
+        if (!$this->isValidNumeric($pageIndex)) {
+            $output->writeln('Page index is not valid: ' . $pageIndex);
+            return Command::FAILURE;
+        }
+        $timeout = $input->getArgument('timeout');
+        if (!$this->isValidNumeric($timeout)) {
+            $output->writeln('Timeout is not valid: ' . $timeout);
+            return Command::FAILURE;
+        }
+        $numberProcess = $input->getArgument('number');
+        if (!$this->isValidNumeric($numberProcess)) {
+            $output->writeln('Number process is not valid: ' . $numberProcess);
             return Command::FAILURE;
         }
 
@@ -102,7 +136,7 @@ final class ProcessingDataFromTempStorageCommand extends Command
 
             $filter = PriorityFilterBuilder::create()
                 ->setEntity($entity)
-                ->setPagination(1, $limit)
+                ->setPagination($pageIndex, $limit)
                 ->build();
 
             try {
@@ -116,6 +150,21 @@ final class ProcessingDataFromTempStorageCommand extends Command
             } catch (\Exception $e) {
                 $this->logger->error($e->getMessage());
                 continue;
+            }
+
+            $subProcesses = [];
+            if ($numberProcess > 1) {
+                $pageIndex = 1;
+                for ($i = 1; $i < $numberProcess; $i++) {
+                    $pageIndex++;
+                    $process = new PhpSubprocess(
+                        ['bin/console', 'processing:data-from-temp-storage', $limit, $pageIndex, 1, $timeout, $entity],
+                        timeout: $timeout * 60
+                    );
+                    $process->start();
+                    $subProcesses[] = $process;
+                }
+                $pageIndex = 1;
             }
 
             $io->info("Start handle data");
@@ -166,10 +215,12 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 $storage->setErrorMessage($error);
             }
 
-            try {
-                $this->storageRepository->deleteByIds($storageIds);
-            } catch (MongoDBException $e) {
-                $this->logger->error($e->getMessage());
+            if (!empty($storageIds)) {
+                try {
+                    $this->storageRepository->deleteByIds($storageIds);
+                } catch (MongoDBException $e) {
+                    $this->logger->error($e->getMessage());
+                }
             }
 
             try {
@@ -184,12 +235,35 @@ final class ProcessingDataFromTempStorageCommand extends Command
 
             $this->documentManager->clear();
 
+            $io->info("Subprocesses waiting started");
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
+            foreach ($subProcesses as $index => $subProcess) {
+                $subProcess->wait();
+
+                if ($subProcess->isSuccessful()) {
+                    $io->success("$entity, process#$index successfully processed");
+                } else {
+                    $io->error(
+                        "$entity, process#$index failed to process, output: \n" . $subProcess->getErrorOutput(
+                        ) . "\n" . $subProcess->getOutput()
+                    );
+                }
+            }
+
+            $io->info("Subprocesses finished");
+            $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
+
             $io->info("Entity processing finished");
             $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
         }
 
-
         return Command::SUCCESS;
+    }
+
+    private function isValidNumeric(mixed $arg): bool
+    {
+        return is_numeric($arg) && $arg >= 1;
     }
 
     private function getCurrentMemoryUsage(): string
