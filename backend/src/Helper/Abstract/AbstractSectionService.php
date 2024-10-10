@@ -8,6 +8,7 @@ use App\Helper\DTO\Data\Product\{AnalogAccessoryProductDataDTO,
     AnalogAccessoryProductDTO,
     AnalogAccessoryProductItemDTO
 };
+use App\Helper\Pagination\DTO\PaginationDTO;
 use MongoDB\BSON\Regex;
 
 abstract readonly class AbstractSectionService
@@ -33,7 +34,7 @@ abstract readonly class AbstractSectionService
         sort($allProducts);
         $count = count($allProducts);
 
-        $allProducts = array_slice($allProducts, ($limit * ($page - 1)), $limit);
+        $allProducts = PaginationDTO::sliceArray(data: $allProducts, page: $page, limit: $limit);
 
         $allProducts = array_map(fn($code) => new AnalogAccessoryProductItemDTO($code), $allProducts);
 
