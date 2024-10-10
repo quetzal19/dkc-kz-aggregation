@@ -29,11 +29,11 @@ class Product
     #[MongoDB\Field(type: Type::INT)]
     private int $sort;
 
-    #[MongoDB\Field(type: Type::STRING)]
-    private string $weight;
+    #[MongoDB\Field(type: Type::STRING, nullable: true )]
+    private ?string $weight = '';
 
-    #[MongoDB\Field(type: Type::STRING)]
-    private string $volume;
+    #[MongoDB\Field(type: Type::STRING, nullable: true)]
+    private ?string $volume = '';
 
     #[MongoDB\Field(type: Type::STRING, nullable: true)]
     private ?string $externalId = null;
@@ -100,7 +100,7 @@ class Product
         return $this;
     }
 
-    public function getWeight(): string
+    public function getWeight(): ?string
     {
         return $this->weight;
     }
@@ -111,7 +111,7 @@ class Product
         return $this;
     }
 
-    public function getVolume(): string
+    public function getVolume(): ?string
     {
         return $this->volume;
     }

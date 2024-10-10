@@ -30,7 +30,11 @@ final readonly class PriorityService
         $builder = $this->storageRepository->builderBasePipeline($priorityFilter);
 
         $result = $builder
-            ->hydrate(TempStorage::class)
+            ->project()
+            ->field('message')
+            ->expression('$message')
+            ->field('action')
+            ->expression('$action')
             ->getAggregation()
             ->getIterator();
 

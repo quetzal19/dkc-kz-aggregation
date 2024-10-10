@@ -3,29 +3,32 @@
 namespace App\Features\Properties\PropertyFeatureMap\Service;
 
 use App\Document\Product\Product;
-use App\Document\Properties\Property;
+use App\Document\Storage\Temp\Error\ErrorMessage;
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Properties\Property\Repository\PropertyRepository;
 use App\Features\Properties\PropertyFeatureMap\DTO\Message\PropertyFeatureMapMessageDTO;
 use App\Helper\Interface\{ActionInterface, Message\MessageDTOInterface};
-use Doctrine\ODM\MongoDB\DocumentManager;
+use App\Features\TempStorage\Error\Type\ErrorType;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Helper\Abstract\Error\AbstractErrorMessage;
 
 final readonly class PropertyFeatureMapActionService implements ActionInterface
 {
     public function __construct(
         private ProductRepository $productRepository,
         private PropertyRepository $propertyRepository,
+        #[Autowire(service: 'monolog.logger.art_class_feature_map')]
         private LoggerInterface $logger,
-        private DocumentManager $documentManager,
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): bool
+    public function create(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var PropertyFeatureMapMessageDTO $dto */
-        if (!$this->setPropertiesToProductAndProperty($dto, 'create')) {
-            return false;
+        $msg = $this->setPropertiesToProductAndProperty($dto, 'create');
+        if (!is_null($msg)) {
+            return $msg;
         }
 
         $this->logger->info(
@@ -33,14 +36,15 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             . " added to property with code " . $dto->primaryKeys->featureCode .
             " and to product with artClass" . $dto->primaryKeys->etimArtClassId,
         );
-        return true;
+        return null;
     }
 
-    public function update(MessageDTOInterface $dto): bool
+    public function update(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var PropertyFeatureMapMessageDTO $dto */
-        if (!$this->setPropertiesToProductAndProperty($dto, 'update')) {
-            return false;
+        $msg = $this->setPropertiesToProductAndProperty($dto, 'update');
+        if (!is_null($msg)) {
+            return $msg;
         }
 
         $this->logger->info(
@@ -48,55 +52,74 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             . " updated to property with code " . $dto->primaryKeys->featureCode .
             " and to product with artClass" . $dto->primaryKeys->etimArtClassId,
         );
-        return true;
+        return null;
     }
 
-    public function delete(MessageDTOInterface $dto): bool
+    public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var PropertyFeatureMapMessageDTO $dto */
-        $product = $this->getProduct($dto, 'delete');
+        $product = $this->productRepository->findOneBy([
+            'artClassId' => $dto->primaryKeys->etimArtClassId
+        ]);
+
         if (!$product) {
-            return false;
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete property feature map, product with artClass " . $dto->primaryKeys->etimArtClassId . " not found"
+            );
         }
 
-        $property = $this->getProperty($dto, 'delete');
+        $property = $this->propertyRepository->findOneBy([
+            'code' => $dto->primaryKeys->featureCode
+        ]);
+
         if (!$property) {
-            return false;
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete property feature map, property with code " . $dto->primaryKeys->featureCode . " not found"
+            );
         }
 
         $property->removeUnit($dto->unitCode);
 
         $product->setProperties(feature: $property->getCode(), unit: '');
 
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
         $this->logger->info(
             "On delete property feature map, unit with code " . $dto->unitCode
             . " removed from property with code " . $dto->primaryKeys->featureCode
             . " and to product with artClass" . $dto->primaryKeys->etimArtClassId,
         );
-        return true;
+        return null;
     }
 
-    private function setPropertiesToProductAndProperty(MessageDTOInterface $dto, string $fromAction): bool
-    {
+    private function setPropertiesToProductAndProperty(
+        MessageDTOInterface $dto,
+        string $fromAction
+    ): ?AbstractErrorMessage {
         /**
          * @var PropertyFeatureMapMessageDTO $dto
          * @var Product $product
          */
-        $product = $this->getProduct($dto, $fromAction);
+        $product = $this->productRepository->findOneBy([
+            'artClassId' => $dto->primaryKeys->etimArtClassId
+        ]);
+
         if (!$product) {
-            return false;
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction property feature map, product with artClass " . $dto->primaryKeys->etimArtClassId . " not found"
+            );
         }
 
-        $property = $this->getProperty($dto, $fromAction);
+        $property = $this->propertyRepository->findOneBy([
+            'code' => $dto->primaryKeys->featureCode
+        ]);
+
         if (!$property) {
-            return false;
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction property feature map, property with code " . $dto->primaryKeys->featureCode . " not found"
+            );
         }
 
         $property->addOrUpdateUnit($dto->unitCode);
@@ -106,47 +129,6 @@ final readonly class PropertyFeatureMapActionService implements ActionInterface
             unit: $dto->unitCode
         );
 
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-            return false;
-        }
-
-        return true;
-    }
-
-    private function getProduct(PropertyFeatureMapMessageDTO $dto, string $fromAction): ?Product
-    {
-        $product = $this->productRepository->findOneBy([
-            'artClassId' => $dto->primaryKeys->etimArtClassId
-        ]);
-
-        if (!$product) {
-            $this->logger->error(
-                "On $fromAction property feature map, product with artClass " . $dto->primaryKeys->etimArtClassId . " not found,"
-                . " message: " . json_encode($dto),
-            );
-            return null;
-        }
-
-        return $product;
-    }
-
-    private function getProperty(PropertyFeatureMapMessageDTO $dto, string $fromAction): ?Property
-    {
-        $property = $this->propertyRepository->findOneBy([
-            'code' => $dto->primaryKeys->featureCode
-        ]);
-
-        if (!$property) {
-            $this->logger->error(
-                "On $fromAction property feature map, property with code " . $dto->primaryKeys->featureCode . " not found,"
-                . " message: " . json_encode($dto),
-            );
-            return null;
-        }
-
-        return $property;
+        return null;
     }
 }

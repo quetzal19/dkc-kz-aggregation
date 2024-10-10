@@ -3,7 +3,8 @@
 namespace App\Features\ProductFeature\Service;
 
 use App\Helper\Interface\{ActionInterface, Mapper\MapperMessageInterface, Message\MessageDTOInterface};
-use App\Document\Product\Product;
+use App\Document\Storage\Temp\Error\ErrorMessage;
+use App\Features\TempStorage\Error\Type\ErrorType;
 use App\Document\Properties\{Property, PropertyValue};
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\ProductFeature\DTO\Message\ProductFeatureMessageDTO;
@@ -13,10 +14,12 @@ use App\Features\Properties\PropertyValue\Repository\PropertyValueRepository;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Helper\Abstract\Error\AbstractErrorMessage;
 
 final readonly class ProductFeatureActionService implements ActionInterface
 {
     public function __construct(
+        #[Autowire(service: 'monolog.logger.product_feature')]
         private LoggerInterface $logger,
         private DocumentManager $documentManager,
         private ProductRepository $productRepository,
@@ -27,18 +30,12 @@ final readonly class ProductFeatureActionService implements ActionInterface
     ) {
     }
 
-    public function create(MessageDTOInterface $dto): bool
+    public function create(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var ProductFeatureMessageDTO $dto */
-        if (!$this->setPropertiesProduct($dto, 'create')) {
-            return false;
-        }
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
+        $msg = $this->setPropertiesProduct($dto, 'create');
+        if (!is_null($msg)) {
+            return $msg;
         }
 
         $this->logger->info(
@@ -46,21 +43,15 @@ final readonly class ProductFeatureActionService implements ActionInterface
             . " and property with code " . $dto->primaryKeys->featureCode . " created",
         );
 
-        return true;
+        return null;
     }
 
-    public function update(MessageDTOInterface $dto): bool
+    public function update(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var ProductFeatureMessageDTO $dto */
-        if (!$this->setPropertiesProduct($dto, 'update')) {
-            return false;
-        }
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
+        $msg = $this->setPropertiesProduct($dto, 'update');
+        if (!is_null($msg)) {
+            return $msg;
         }
 
         $this->logger->info(
@@ -68,37 +59,45 @@ final readonly class ProductFeatureActionService implements ActionInterface
             . " and property with code " . $dto->primaryKeys->featureCode . " updated",
         );
 
-        return true;
+        return null;
     }
 
-    public function delete(MessageDTOInterface $dto): bool
+    public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var ProductFeatureMessageDTO $dto */
-        $property = $this->getProperty($dto, 'delete');
-        $product = $this->getProduct($dto, 'delete');
+        $property = $this->propertyRepository->findOneBy([
+            'code' => $dto->primaryKeys->featureCode,
+        ]);
 
-        if (!$property || !$product) {
-            return false;
+        if (!$property) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete product feature, property with code " . $dto->primaryKeys->featureCode . " not found"
+            );
+        }
+
+        $product = $this->productRepository->findOneBy([
+            'code' => $dto->primaryKeys->productCode,
+        ]);
+
+        if (!$product) {
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On delete product feature, product with code " . $dto->primaryKeys->productCode . " not found"
+            );
         }
 
         $product->removePropertyByFeature($property->getCode());
-
-        try {
-            $this->documentManager->flush();
-        } catch (\Exception $exception) {
-            $this->logger->error($exception->getMessage());
-            return false;
-        }
 
         $this->logger->info(
             "Product feature, product with code " . $dto->primaryKeys->productCode
             . " and property with code " . $dto->primaryKeys->featureCode . " deleted"
         );
 
-        return true;
+        return null;
     }
 
-    private function setPropertiesProduct(ProductFeatureMessageDTO $dto, string $fromAction): bool
+    private function setPropertiesProduct(ProductFeatureMessageDTO $dto, string $fromAction): ?AbstractErrorMessage
     {
         /** @var PropertyValue $propertyValue */
         if (!empty($dto->valueCode)) {
@@ -107,15 +106,14 @@ final readonly class ProductFeatureActionService implements ActionInterface
             ]);
 
             if (!$propertyValue) {
-                $this->logger->error(
-                    "On $fromAction product feature, propertyValue with code $dto->valueCode not found,"
-                    . " message: " . json_encode($dto),
+                return new ErrorMessage(
+                    ErrorType::DATA_NOT_READY,
+                    "On $fromAction product feature, propertyValue with code $dto->valueCode not found"
                 );
-                return false;
             }
         } elseif (!empty($dto->value)) {
             $propertyValue = $this->propertyValueRepository->findOneBy([
-                'value' => $dto->valueCode,
+                'names.name' => $dto->value,
                 'code' => null
             ]);
 
@@ -127,20 +125,32 @@ final readonly class ProductFeatureActionService implements ActionInterface
                 $propertyValue = $this->propertyValueMapper->mapFromMessageDTO($propertyValueDTO);
             }
         } else {
-            $this->logger->error(
-                "On $fromAction product feature 'value' and 'valueCode' is empty, message: " . json_encode($dto),
+            return new ErrorMessage(
+                ErrorType::VALIDATION_ERROR,
+                "On $fromAction product feature 'value' and 'valueCode' is empty, message: " . json_encode($dto)
             );
-            return false;
         }
 
-        $product = $this->getProduct($dto, $fromAction);
+        $product = $this->productRepository->findOneBy([
+            'code' => $dto->primaryKeys->productCode,
+        ]);
+
         if (!$product) {
-            return false;
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction product feature, product with code " . $dto->primaryKeys->productCode . " not found"
+            );
         }
 
-        $property = $this->getProperty($dto, $fromAction);
+        $property = $this->propertyRepository->findOneBy([
+            'code' => $dto->primaryKeys->featureCode,
+        ]);
+
         if (!$property) {
-            return false;
+            return new ErrorMessage(
+                ErrorType::DATA_NOT_READY,
+                "On $fromAction product feature, property with code " . $dto->primaryKeys->featureCode . " not found"
+            );
         }
 
         if (!$this->documentManager->contains($propertyValue)) {
@@ -152,40 +162,6 @@ final readonly class ProductFeatureActionService implements ActionInterface
             value: $propertyValue->getCodeOrId()
         );
 
-        return true;
-    }
-
-    private function getProperty(ProductFeatureMessageDTO $dto, string $fromAction): ?Property
-    {
-        $property = $this->propertyRepository->findOneBy([
-            'code' => $dto->primaryKeys->featureCode,
-        ]);
-
-        if (!$property) {
-            $this->logger->error(
-                "On $fromAction product feature, property with code " . $dto->primaryKeys->featureCode . " not found,"
-                . " message: " . json_encode($dto),
-            );
-            return null;
-        }
-
-        return $property;
-    }
-
-    private function getProduct(ProductFeatureMessageDTO $dto, string $fromAction): ?Product
-    {
-        $product = $this->productRepository->findOneBy([
-            'code' => $dto->primaryKeys->productCode,
-        ]);
-
-        if (!$product) {
-            $this->logger->error(
-                "On $fromAction product feature, product with code " . $dto->primaryKeys->productCode . " not found,"
-                . " message: " . json_encode($dto),
-            );
-            return null;
-        }
-
-        return $product;
+        return null;
     }
 }

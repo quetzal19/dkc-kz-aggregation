@@ -10,6 +10,7 @@ use App\Features\Section\Repository\SectionRepository;
 
 #[MongoDB\Document(repositoryClass: SectionRepository::class)]
 #[MongoDB\UniqueIndex(keys: ['code' => 'asc', 'locale' => 'asc'])]
+#[MongoDB\Index(keys: ['externalId' => 'asc'])]
 #[MongoDB\HasLifecycleCallbacks()]
 class Section extends TreeNode
 {

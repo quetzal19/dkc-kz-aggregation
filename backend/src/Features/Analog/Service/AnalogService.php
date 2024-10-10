@@ -2,10 +2,12 @@
 
 namespace App\Features\Analog\Service;
 
+use App\Document\Product\Product;
 use App\Helper\DTO\Data\Product\AnalogAccessoryProductDTO;
 use App\Helper\DTO\Data\Section\AnalogAccessorySectionDataDTO;
 use App\Helper\DTO\Data\Section\AnalogAccessorySectionDTO;
 use App\Helper\DTO\Data\Section\AnalogAccessorySectionItemDTO;
+use App\Helper\Enum\LocaleType;
 use App\Features\Analog\{Filter\AnalogFilter, Repository\AnalogRepository};
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Section\Repository\SectionRepository;
@@ -23,14 +25,31 @@ final readonly class AnalogService extends AbstractSectionService
 
     public function getAnalogProducts(AnalogFilter $filter, string $locale): AnalogAccessoryProductDTO
     {
+        /** @var Product $product */
+        $product = $this->productRepository->findOneBy(
+            [
+                'code' => $filter->productCode,
+                'locale' => LocaleType::fromString($locale)->value
+            ]
+        );
+
+        if (empty($product)) {
+            return $this->getProductsResult(
+                limit: $filter->limit,
+                page: $filter->page,
+                ids: [],
+                productCodesBySectionCodes: []
+            );
+        }
+
         $activeProductsCodeBySections = $this->getActiveProductsBySections(
-            $filter->productCode,
+            $product->getId(),
             $filter->sectionName,
             $locale
         );
 
         $analogsCode = $this->analogRepository->getActiveAnalogs(
-            $filter->productCode,
+            $product->getId(),
             $filter->sectionName,
             $locale,
         );
@@ -45,7 +64,23 @@ final readonly class AnalogService extends AbstractSectionService
 
     public function getAnalogSections(string $productCode, string $locale): AnalogAccessorySectionDTO
     {
-        $sections = $this->analogRepository->getSections($productCode, $locale);
+        $sections = [];
+
+        /** @var Product $product */
+        $product = $this->productRepository->findOneBy(
+            [
+                'code' => $productCode,
+                'locale' => LocaleType::fromString($locale)->value
+            ]
+        );
+
+        if (empty($product)) {
+            return new AnalogAccessorySectionDTO(
+                new AnalogAccessorySectionDataDTO($sections)
+            );
+        }
+
+        $sections = $this->analogRepository->getAnalogsSections($product->getId(), $locale);
 
         $sections = array_column($sections, '_id');
         $sections = array_filter($sections);
