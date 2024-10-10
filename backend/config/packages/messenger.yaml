@@ -5,13 +5,21 @@ framework:
 
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
-            amqp: '%env(MESSENGER_TRANSPORT_DSN)%'
+            messages:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                serializer: App\Features\TempStorage\Serializer\TempStorageMessageSerializer
+                options:
+                    exchange:
+                        name: facet
+                    queues:
+                        messages_facet:
+                            flags: false
             # failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
 
         routing:
             # Route your messages to the transports
-             'App\Features\TempStorage\DTO\TempStorageDTO': amqp
+            'App\Features\TempStorage\DTO\Message\TempStorageMessage': messages
 
 # when@test:
 #    framework:

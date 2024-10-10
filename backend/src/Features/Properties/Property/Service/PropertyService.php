@@ -33,14 +33,11 @@ final readonly class PropertyService
         $localeInt = LocaleType::fromString($locale)->value;
 
         /** @var Section $section */
-        $section = $this->sectionRepository->findOneBy([
-            'code' => $propertyFilter->sectionCode,
-            'locale' => $localeInt,
-        ]);
+        $section = $this->sectionRepository->findActiveSection($propertyFilter->sectionCode, $locale);
 
         if (!$section) {
             throw new ApiException(
-                message: 'Секция не найдена',
+                message: 'Секция не найдена или не активна',
                 status: Response::HTTP_NOT_FOUND,
             );
         }
@@ -49,13 +46,7 @@ final readonly class PropertyService
         $filtersIsEmpty = empty($propertyFilter->filters);
 
         if (!$filtersIsEmpty) {
-            try {
-                $filters = json_decode($propertyFilter->filters, true, flags: JSON_THROW_ON_ERROR);
-            } catch (\JsonException) {
-                throw new ApiException(
-                    message: 'Неверный формат фильтра',
-                );
-            }
+            $filters = json_decode($propertyFilter->filters, true);
         }
 
         $childrenSections = $this->sectionRepository->findChildrenByFullPath($section->getFullPath(), $localeInt);

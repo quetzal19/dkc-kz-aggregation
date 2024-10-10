@@ -43,6 +43,7 @@ services:
     image: mongo:4.4
     environment:
       MONGO_INITDB_DATABASE: ${DB_NAME}
+    restart: unless-stopped
     volumes:
       - ./dev/mongo/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./dev/mongo/data/db/:/data/db/
@@ -76,6 +77,7 @@ services:
       - ./dev/nginx/logs:/var/log/nginx/
     depends_on:
       - php-fpm
+    restart: unless-stopped
     networks:
       dkc-kz:
         ipv4_address: 172.24.204.9
