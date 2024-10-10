@@ -6,7 +6,7 @@ use App\Document\Properties\Property;
 use App\Document\Section\Section;
 use App\Features\Product\DTO\Property\ProductPropertyDTO;
 use App\Features\Product\Repository\ProductRepository;
-use App\Features\Properties\Property\DTO\Repository\{PropertyFilterDTO, PropertyFilterValueDTO};
+use App\Features\Properties\Property\DTO\Repository\PropertyFilterDTO;
 use App\Features\Properties\Property\DTO\Http\Response\{PropertyFilterItemResponseDTO,
     PropertyFilterItemValueResponseDTO,
     PropertyFilterResponseDTO
@@ -33,116 +33,111 @@ final readonly class PropertyService
         $localeInt = LocaleType::fromString($locale)->value;
 
         /** @var Section $section */
-        $section = $this->sectionRepository->findOneBy([
-            'code' => $propertyFilter->sectionCode,
-            'locale' => $localeInt,
-        ]);
+        $section = $this->sectionRepository->findActiveSection($propertyFilter->sectionCode, $locale);
 
         if (!$section) {
             throw new ApiException(
-                message: 'Секция не найдена',
+                message: 'Секция не найдена или не активна',
                 status: Response::HTTP_NOT_FOUND,
             );
         }
 
         $filters = [];
         $filtersIsEmpty = empty($propertyFilter->filters);
+
         if (!$filtersIsEmpty) {
-            try {
-                $filters = json_decode($propertyFilter->filters, true, flags: JSON_THROW_ON_ERROR);
-            } catch (\JsonException) {
-                throw new ApiException(
-                    message: 'Неверный формат фильтра',
-                );
-            }
+            $filters = json_decode($propertyFilter->filters, true);
         }
 
         $childrenSections = $this->sectionRepository->findChildrenByFullPath($section->getFullPath(), $localeInt);
-        $allSections = [$section, ...$childrenSections];
+        $sectionCodes = array_map(fn(Section $section) => $section->getCode(), [$section, ...$childrenSections]);
 
-        $sectionCodes = array_map(fn(Section $section) => $section->getCode(), $allSections);
-
+        /** @var ProductPropertyDTO[] $productsProperties */
         $productsProperties = [];
         if (!$filtersIsEmpty) {
             $groupedProducts = $this->productRepository->getProductFilters(
                 filters: $filters,
                 sectionCodes: $sectionCodes,
-                locale: $locale,
             );
 
             foreach ($groupedProducts as $groupedProduct) {
-                $productProperty = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
-
-                /** @var ProductPropertyDTO[] $productsProperties */
-                $productsProperties[$productProperty->featureCode][$productProperty->value] = $productProperty;
+                $productsProperties[] = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
             }
         }
 
         $properties = $this->propertyRepository->findBySectionCodes($sectionCodes);
 
         $indexedPropertiesByCode = [];
-        $propertiesValue = [];
+        $propertiesCodes = [];
         foreach ($properties as $property) {
             $indexedPropertiesByCode[$property->getCode()] = $property;
-            $propertiesValue[$property->getCode()] = [];
+            $propertiesCodes[] = $property->getCode();
         }
-        $propertyCodes = array_keys($propertiesValue);
 
         $foundedProperties = $this->productRepository->getSortedProperties(
-            propertyCodes: $propertyCodes,
+            propertyCodes: $propertiesCodes,
             sectionCodes: $sectionCodes,
             locale: $locale
         );
 
         $filters = [];
-        $valueFilters = [];
+        $propertiesFilter = [];
+
+        $totalCount = 0;
         foreach ($foundedProperties as $foundedProperty) {
             $propertyFilterDTO = $this->denormalizer->denormalize(
-                $foundedProperty,
+                $foundedProperty['_id'],
                 PropertyFilterDTO::class,
             );
 
-            if (!array_key_exists($propertyFilterDTO->_id, $indexedPropertiesByCode)) {
+            if (!array_key_exists($propertyFilterDTO->featureCode, $indexedPropertiesByCode)) {
                 continue;
             }
 
             /** @var Property $property */
-            $property = $indexedPropertiesByCode[$propertyFilterDTO->_id];
+            $property = $indexedPropertiesByCode[$propertyFilterDTO->featureCode];
 
-            $filter = new PropertyFilterItemResponseDTO(
-                code: $property->getCode(),
-                name: $property->getNameByLocale($locale),
-                count: $propertyFilterDTO->count,
-            );
+            if (array_key_exists($property->getCode(), $propertiesFilter)) {
+                $filter =  $propertiesFilter[$property->getCode()];
+            } else {
+                $filter = new PropertyFilterItemResponseDTO(
+                    code: $property->getCode(),
+                    name: $property->getNameByLocale($locale),
+                );
 
-            foreach ($propertyFilterDTO->values as $propertyValue) {
-                /** @var PropertyFilterValueDTO $propertyValue */
-                $propertyValue = $this->denormalizer->denormalize($propertyValue, PropertyFilterValueDTO::class);
-
-                if (array_key_exists($property->getCode(), $valueFilters) &&
-                    array_key_exists($propertyValue->valueCode, $valueFilters[$property->getCode()])
-                ) {
-                    $value = $valueFilters[$property->getCode()][$propertyValue->valueCode];
-                } else {
-                    $unit = $property->getUnitNameByCodeAndLocale($propertyValue->unitCode, $localeInt);
-
-                    $value = new PropertyFilterItemValueResponseDTO(
-                        code: $propertyValue->valueCode,
-                        name: $propertyValue->valueName . ($unit ? " $unit" : ''),
-                    );
-
-                    $valueFilters[$property->getCode()][$propertyValue->valueCode] = $value;
-
-                    $filter->addValue($value);
-                }
+                $filters[] = $filter;
+                $propertiesFilter[$property->getCode()] = $filter;
             }
 
-            $filters[] = $filter;
+            $unit = $property->getUnitNameByCodeAndLocale($propertyFilterDTO->unitCode, $localeInt);
+
+            $value = new PropertyFilterItemValueResponseDTO(
+                code: $propertyFilterDTO->valueCode,
+                name: $propertyFilterDTO->valueName . ($unit ? " $unit" : ''),
+            );
+
+            if(!$filtersIsEmpty) {
+                $countProducts = 0;
+                foreach ($productsProperties as $productsProperty) {
+                    $intersectedProducts = array_intersect($productsProperty->products, $propertyFilterDTO->productCodes);
+                    $countProducts += count($intersectedProducts);
+                }
+            } else {
+                $countProducts = count($propertyFilterDTO->productCodes);
+            }
+
+            $value
+                ->setCount($countProducts)
+                ->setEnabledFromBoolean($countProducts > 0);
+
+            $totalCount += $countProducts;
+
+            $filter->addValue($value);
         }
 
         return new PropertyFilterResponseDTO(
             filters: $filters,
-            count: 0
+            count: $totalCount
         );
     }
 }

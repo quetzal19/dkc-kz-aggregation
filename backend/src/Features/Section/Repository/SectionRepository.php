@@ -14,6 +14,61 @@ class SectionRepository extends ServiceDocumentRepository
         parent::__construct($registry, Section::class);
     }
 
+    public function findActiveSection(string $sectionCode, string $locale): ?Section
+    {
+        $localeInt = LocaleType::fromString($locale)->value;
+
+        $builder = $this->createAggregationBuilder();
+
+        $builder
+            ->match()
+            ->field('code')
+            ->equals($sectionCode)
+            ->field('locale')
+            ->equals($localeInt)
+            ->addFields()
+            ->field('fullPath')
+            ->expression([
+                [
+                    '$split' => [
+                        [
+                            '$cond' => [
+                                ['$ifNull' => ['$path', false]],
+                                ['$concat' => ['$path', ',', '$code']],
+                                '$code'
+                            ]
+                        ],
+                        ','
+                    ]
+                ]
+            ])
+            ->unwind('$fullPath')
+            ->lookup(Section::class)
+            ->let(['fullPath' => '$fullPath'])
+            ->pipeline([
+                [
+                    '$match' => [
+                        '$expr' => [
+                            '$in' => ['$code', '$$fullPath'],
+                        ],
+                    ]
+                ],
+                [
+                    '$match' => [
+                        'active' => false,
+                        'locale' => $localeInt
+                    ]
+                ]
+            ])
+            ->alias('parentSection')
+            ->match()
+            ->field('parentSection')
+            ->equals([]);
+
+        $sections = $builder->hydrate(Section::class)->getAggregation()->getIterator()->toArray();
+        return array_shift($sections);
+    }
+
     /** @return Section[] */
     public function findChildrenByRegex(array $regex, string $locale): array
     {
@@ -36,6 +91,7 @@ class SectionRepository extends ServiceDocumentRepository
             'path' => new Regex(
                 implode(',', $path) . '(,|$)'
             ),
+            'active' => true,
             'locale' => $locale
         ]);
     }
