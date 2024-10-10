@@ -100,7 +100,8 @@ abstract class AbstractAnalogAccessoryRepository extends ServiceDocumentReposito
                 ],
                 [
                     '$match' => [
-                        'active' => false
+                        'active' => false,
+                        'locale' => LocaleType::fromString($locale)->value
                     ]
                 ]
             ])
