@@ -98,10 +98,10 @@ final class AnalogController extends AbstractController
     #[Route('/sections/', name: 'api_v1_analogs_sections', methods: [Request::METHOD_GET])]
     public function getAnalogsSections(
         Request $request,
-        #[MapQueryParameter] string $productCode
+        #[MapQueryString] AnalogFilter $filter
     ): JsonResponse {
         $locale = $request->getLocale();
 
-        return $this->json($this->analogService->getAnalogSections($productCode, $locale));
+        return $this->json($this->analogService->getAnalogSections($filter->productCode, $locale));
     }
 }
