@@ -4,14 +4,14 @@ services:
   php-fpm:
     container_name: dkc-kz-agg-p-php
     build:
-      context: ./stage/php
+      context: ./prod/php
       args:
         UID: ${UID}
         GID: ${GID}
     volumes:
       - ../backend:/var/www/backend
-      - ./stage/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
-      - ./stage/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./prod/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+      - ./prod/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     depends_on:
       - mongodb
     restart: unless-stopped
@@ -22,7 +22,7 @@ services:
   cron:
     container_name: dkc-kz-agg-p-cron
     build:
-      context: ./stage/cron
+      context: ./prod/cron
       args:
         UID: ${UID}
         GID: ${GID}
@@ -32,8 +32,8 @@ services:
     volumes:
       - ../backend:/var/www/backend
       - ../crontab:/var/crontab/www-data
-      - ./stage/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
-      - ./stage/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./prod/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+      - ./prod/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
     networks:
       dkc-kz-prod:
         ipv4_address: 172.24.201.6
@@ -45,10 +45,10 @@ services:
       MONGO_INITDB_DATABASE: ${DB_NAME}
     restart: unless-stopped
     volumes:
-      - ./stage/mongo/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-      - ./stage/mongo/data/db/:/data/db/
-      - ./stage/mongo/data/log/:/var/log/mongodb/
-      - ./stage/mongo/backup/:/backup/
+      - ./prod/mongo/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./prod/mongo/data/db/:/data/db/
+      - ./prod/mongo/data/log/:/var/log/mongodb/
+      - ./prod/mongo/backup/:/backup/
     networks:
       dkc-kz-prod:
         ipv4_address: 172.24.201.7
@@ -60,8 +60,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     volumes:
-      - ./stage/rabbitmq/data/:/var/lib/rabbitmq/
-      - ./stage/rabbitmq/log/:/var/log/rabbitmq
+      - ./prod/rabbitmq/data/:/var/lib/rabbitmq/
+      - ./prod/rabbitmq/log/:/var/log/rabbitmq
     restart: unless-stopped
     networks:
       dkc-kz-prod:
@@ -73,8 +73,8 @@ services:
     env_file: .env
     volumes:
       - ../backend:/var/www/backend
-      - ./stage/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./stage/nginx/logs:/var/log/nginx/
+      - ./prod/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./prod/nginx/logs:/var/log/nginx/
     depends_on:
       - php-fpm
     restart: unless-stopped
