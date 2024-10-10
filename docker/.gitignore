@@ -18,3 +18,10 @@ stage/mongo/data/db/
 stage/mongo/data/log/
 stage/mongo/backup/
 stage/nginx/logs/
+
+prod/rabbitmq/log/
+prod/rabbitmq/data/
+prod/mongo/data/db/
+prod/mongo/data/log/
+prod/mongo/backup/
+prod/nginx/logs/

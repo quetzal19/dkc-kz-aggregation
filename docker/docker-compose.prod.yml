@@ -1,0 +1,87 @@
+name: 'dkc-kz-agg-p'
+
+services:
+  php-fpm:
+    container_name: dkc-kz-agg-p-php
+    build:
+      context: ./prod/php
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    volumes:
+      - ../backend:/var/www/backend
+      - ./prod/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+      - ./prod/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      dkc-kz-stage:
+        ipv4_address: 172.24.201.5
+
+  cron:
+    container_name: dkc-kz-agg-p-cron
+    build:
+      context: ./prod/cron
+      args:
+        UID: ${UID}
+        GID: ${GID}
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    volumes:
+      - ../backend:/var/www/backend
+      - ../crontab:/var/crontab/www-data
+      - ./prod/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+      - ./prod/php/conf.d/php.ini:/usr/local/etc/php/conf.d/php.ini
+    networks:
+      dkc-kz-prod:
+        ipv4_address: 172.24.201.6
+
+  mongodb:
+    container_name: dkc-kz-agg-p-mongo
+    image: mongo:4.4
+    environment:
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+    restart: unless-stopped
+    volumes:
+      - ./prod/mongo/initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./prod/mongo/data/db/:/data/db/
+      - ./prod/mongo/data/log/:/var/log/mongodb/
+      - ./prod/mongo/backup/:/backup/
+    networks:
+      dkc-kz-prod:
+        ipv4_address: 172.24.201.7
+
+  rabbit:
+    container_name: dkc-kz-agg-p-rabbit
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./prod/rabbitmq/data/:/var/lib/rabbitmq/
+      - ./prod/rabbitmq/log/:/var/log/rabbitmq
+    restart: unless-stopped
+    networks:
+      dkc-kz-prod:
+        ipv4_address: 172.24.201.8
+
+  nginx:
+    container_name: dkc-kz-agg-p-nginx
+    image: nginx
+    env_file: .env
+    volumes:
+      - ../backend:/var/www/backend
+      - ./prod/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./prod/nginx/logs:/var/log/nginx/
+    depends_on:
+      - php-fpm
+    restart: unless-stopped
+    networks:
+      dkc-kz-prod:
+        ipv4_address: 172.24.201.9
+
+networks:
+  dkc-kz-prod:
+    external: true
