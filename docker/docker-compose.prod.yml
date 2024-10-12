@@ -16,7 +16,7 @@ services:
       - mongodb
     restart: unless-stopped
     networks:
-      dkc-kz-stage:
+      dkc-kz-prod:
         ipv4_address: 172.24.201.5
 
   cron:
