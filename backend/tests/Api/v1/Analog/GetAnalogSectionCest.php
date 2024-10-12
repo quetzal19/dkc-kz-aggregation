@@ -2,7 +2,7 @@
 
 namespace App\Tests\Api\v1\Analog;
 
-use App\Tests\Helper\{ProductHelper, SectionHelper, ValidationHelper};
+use App\Tests\Helper\{Api\ProductHelper, Api\SectionHelper, Api\ValidationHelper};
 use App\Tests\Support\ApiTester;
 use Codeception\Util\HttpCode;
 

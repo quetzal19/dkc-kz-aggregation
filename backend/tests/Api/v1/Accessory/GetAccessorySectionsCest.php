@@ -2,9 +2,9 @@
 
 namespace App\Tests\Api\v1\Accessory;
 
-use App\Tests\Helper\ProductHelper;
-use App\Tests\Helper\SectionHelper;
-use App\Tests\Helper\ValidationHelper;
+use App\Tests\Helper\Api\ProductHelper;
+use App\Tests\Helper\Api\SectionHelper;
+use App\Tests\Helper\Api\ValidationHelper;
 use App\Tests\Support\ApiTester;
 use Codeception\Util\HttpCode;
 

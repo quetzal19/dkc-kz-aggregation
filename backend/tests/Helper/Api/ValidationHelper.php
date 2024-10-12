@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Helper;
+namespace App\Tests\Helper\Api;
 
 class ValidationHelper
 {

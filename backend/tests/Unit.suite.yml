@@ -5,4 +5,7 @@
 actor: UnitTester
 modules:
     enabled:
+        - Symfony:
+              app_path: 'src'
+              environment: 'test'
         - Asserts

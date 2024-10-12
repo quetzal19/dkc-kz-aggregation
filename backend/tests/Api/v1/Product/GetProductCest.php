@@ -1,26 +1,30 @@
 <?php
 
-namespace App\Tests\Api\v1\Accessory;
+namespace App\Tests\Api\v1\Product;
 
-use App\Tests\{Helper\Api\PaginationHelper, Helper\Api\ProductHelper, Helper\Api\ValidationHelper, Support\ApiTester};
+use App\Tests\{Helper\Api\PaginationHelper,
+    Helper\Api\ProductHelper,
+    Helper\Api\SectionHelper,
+    Helper\Api\ValidationHelper,
+    Support\ApiTester};
 use Codeception\Util\HttpCode;
 
-class GetAccessoryProductCest
+class GetProductCest
 {
-    /**
-     * @throws \Exception
-     */
+
     public function successStructure(ApiTester $I): void
     {
         $page = 1;
         $limit = 10;
 
-        $I->sendGet("/accessories/products/?productCode=". ProductHelper::PRODUCT_CODE . "&limit=$limit&page=$page");
+        $I->sendGet('/products/?sectionCode=' . SectionHelper::SECTION_CODE . "&limit=$limit&page=$page");
+
         $I->seeResponseCodeIs(HttpCode::OK);
         $I->seeResponseIsJson();
+
         $I->seeResponseContainsJson([
             'data' => [
-                'products' => [],
+                'products' => []
             ],
             'errors' => []
         ]);
@@ -36,7 +40,7 @@ class GetAccessoryProductCest
 
     public function withoutProductCode(ApiTester $I): void
     {
-        $I->sendGet('/accessories/products/');
+        $I->sendGet('/products/');
 
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(HttpCode::BAD_REQUEST);
@@ -46,7 +50,7 @@ class GetAccessoryProductCest
             'detail' => null,
             'validationError' => [
                 'body' => [
-                    ProductHelper::MISSING_PRODUCT_CODE_VALIDATION_ERROR
+                    SectionHelper::MISSING_SECTION_CODE_VALIDATION_ERROR
                 ]
             ]
         ]);
@@ -57,7 +61,7 @@ class GetAccessoryProductCest
         $page = "page";
         $limit = 9999;
 
-        $I->sendGet("/accessories/products/?limit=$limit&page=$page");
+        $I->sendGet("/products/?limit=$limit&page=$page");
         $I->seeResponseCodeIs(HttpCode::BAD_REQUEST);
         $I->seeResponseContainsJson([
             'status' => HttpCode::BAD_REQUEST,
@@ -65,7 +69,7 @@ class GetAccessoryProductCest
             'detail' => null,
             'validationError' => [
                 'body' => [
-                    ProductHelper::MISSING_PRODUCT_CODE_VALIDATION_ERROR,
+                    SectionHelper::MISSING_SECTION_CODE_VALIDATION_ERROR,
                     PaginationHelper::INVALID_PAGE_VALIDATION_ERROR,
                     PaginationHelper::invalidLimitParam($limit)
                 ]
