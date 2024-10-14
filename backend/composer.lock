@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c23e67068154070f3c100e3db3dad344",
+    "content-hash": "f88841d0e22c6bb0b339c007ff9427f8",
     "packages": [
         {
             "name": "doctrine/cache",
@@ -5949,6 +5949,55 @@
                 "source": "https://github.com/Codeception/module-asserts/tree/3.0.0"
             },
             "time": "2022-02-16T19:48:08+00:00"
+        },
+        {
+            "name": "codeception/module-mongodb",
+            "version": "3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Codeception/module-mongodb.git",
+                "reference": "f9d3ed6d46892d6192ede90f17439e99cdd8ea62"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Codeception/module-mongodb/zipball/f9d3ed6d46892d6192ede90f17439e99cdd8ea62",
+                "reference": "f9d3ed6d46892d6192ede90f17439e99cdd8ea62",
+                "shasum": ""
+            },
+            "require": {
+                "codeception/codeception": "^5.0",
+                "mongodb/mongodb": "^1.12",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "codeception/stub": "^4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Bodnarchuk"
+                }
+            ],
+            "description": "MongoDB module for Codeception",
+            "homepage": "https://codeception.com/",
+            "keywords": [
+                "codeception",
+                "mongodb"
+            ],
+            "support": {
+                "issues": "https://github.com/Codeception/module-mongodb/issues",
+                "source": "https://github.com/Codeception/module-mongodb/tree/3.0.0"
+            },
+            "time": "2022-05-27T06:42:04+00:00"
         },
         {
             "name": "codeception/module-phpbrowser",

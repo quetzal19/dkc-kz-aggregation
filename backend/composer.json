@@ -79,6 +79,7 @@
     "require-dev": {
         "codeception/codeception": "^5.1",
         "codeception/module-asserts": "^3.0",
+        "codeception/module-mongodb": "^3.0",
         "codeception/module-phpbrowser": "*",
         "codeception/module-rest": "^3.4",
         "codeception/module-symfony": "^3.4",
