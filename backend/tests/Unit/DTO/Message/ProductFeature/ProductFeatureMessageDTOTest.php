@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Unit\DTO\Message\Product;
+namespace App\Tests\Unit\DTO\Message\ProductFeature;
 
 use App\Features\ProductFeature\DTO\Message\ProductFeatureMessageDTO;
 use App\Tests\Helper\Unit\BaseUnitTest;
