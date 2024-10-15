@@ -7,11 +7,15 @@ use App\Features\Properties\PropertyValue\DTO\Message\PropertyValueMessageDTO;
 class PropertyValueHelper
 {
     public const CODE = 'QZG1G';
-    public static function createPropertyValueMessageDTO(array $propertyNames): PropertyValueMessageDTO
-    {
+    public const UPDATED_CODE = 'EC002404';
+
+    public static function createPropertyValueMessageDTO(
+        array $propertyNames,
+        string $code = self::CODE
+    ): PropertyValueMessageDTO {
         return new PropertyValueMessageDTO(
-            self::CODE,
-                $propertyNames
+            $code,
+            $propertyNames
         );
     }
 }

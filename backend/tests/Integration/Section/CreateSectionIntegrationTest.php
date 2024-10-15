@@ -4,6 +4,7 @@ namespace App\Tests\Integration\Section;
 
 use App\Tests\Helper\Integration\SectionHelper;
 use App\Tests\Integration\AbstractIntegrationTester;
+use MongoDB\Model\BSONDocument;
 
 class CreateSectionIntegrationTest extends AbstractIntegrationTester
 {
@@ -12,6 +13,11 @@ class CreateSectionIntegrationTest extends AbstractIntegrationTester
         $DTO = SectionHelper::createSectionMessageDTO();
 
         $this->tester->assertNull($this->sectionService->create($DTO));
+        $this->documentManager->flush();
+
+        $section = $this->tester->grabFromCollection('Section', ['code' => $DTO->code]);
+
+        $this->tester->assertNotNull($section);
     }
 
     public function testSuccessCreateWithParentId(): void
@@ -27,6 +33,12 @@ class CreateSectionIntegrationTest extends AbstractIntegrationTester
         );
 
         $this->tester->assertNull($this->sectionService->create($DTO));
+        $this->documentManager->flush();
+
+        $section = $this->tester->grabFromCollection('Section', ['code' => $DTO->code]);
+
+        $this->tester->assertNotNull($section);
+        $this->tester->assertInstanceOf(BSONDocument::class, $section);
     }
 
     public function testFailureCreateWithParentId(): void
@@ -36,6 +48,11 @@ class CreateSectionIntegrationTest extends AbstractIntegrationTester
         );
 
         $this->tester->assertNotNull($this->sectionService->create($DTO));
+        $this->documentManager->flush();
+
+        $section = $this->tester->grabFromCollection('Section', ['code' => $DTO->code]);
+
+        $this->tester->assertNull($section);
     }
 
     public function testFailureCreateWithAlreadyExistingSection(): void
@@ -45,5 +62,10 @@ class CreateSectionIntegrationTest extends AbstractIntegrationTester
         $DTO = SectionHelper::createSectionMessageDTO();
 
         $this->tester->assertNotNull($this->sectionService->create($DTO));
+        $this->documentManager->flush();
+
+        $section = $this->tester->grabFromCollection('Section', ['code' => $DTO->code]);
+
+        $this->tester->assertNotNull($section);
     }
 }

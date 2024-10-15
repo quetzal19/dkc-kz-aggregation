@@ -17,6 +17,11 @@ class DeleteProductIntegrationTest extends AbstractIntegrationTester
         );
 
         $this->tester->assertNull($this->productService->delete($DTO));
+        $this->documentManager->flush();
+
+        $product = $this->tester->grabFromCollection('Product', ['code' => $DTO->code]);
+
+        $this->tester->assertNull($product);
     }
 
     public function testFailureDeleteProduct(): void
@@ -26,5 +31,9 @@ class DeleteProductIntegrationTest extends AbstractIntegrationTester
         );
 
         $this->tester->assertNotNull($this->productService->delete($DTO));
+
+        $product = $this->tester->grabFromCollection('Product', ['code' => $DTO->code]);
+
+        $this->tester->assertNull($product);
     }
 }

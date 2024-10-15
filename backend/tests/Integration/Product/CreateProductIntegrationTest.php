@@ -16,6 +16,11 @@ class CreateProductIntegrationTest extends AbstractIntegrationTester
         );
 
         $this->tester->assertNull($this->productService->create($DTO));
+        $this->documentManager->flush();
+
+        $product = $this->tester->grabFromCollection('Product', ['code' => $DTO->code]);
+
+        $this->tester->assertNotNull($product);
     }
 
     public function testFailureCreateWithoutSection(): void
@@ -25,9 +30,13 @@ class CreateProductIntegrationTest extends AbstractIntegrationTester
         );
 
         $this->tester->assertNotNull($this->productService->create($DTO));
+
+        $product = $this->tester->grabFromCollection('Product', ['code' => $DTO->code]);
+
+        $this->tester->assertNull($product);
     }
 
-    public function testFailureCreateWithAlreadyExistingProduct()
+    public function testFailureCreateWithAlreadyExistingProduct(): void
     {
         $this->createProduct();
 

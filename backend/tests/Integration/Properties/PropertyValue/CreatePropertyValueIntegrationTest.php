@@ -13,6 +13,10 @@ class CreatePropertyValueIntegrationTest extends AbstractIntegrationTester
         $DTO = PropertyValueHelper::createPropertyValueMessageDTO($propertyNames);
 
         $this->tester->assertNull($this->propertyValueService->create($DTO));
+        $this->documentManager->flush();
+
+        $propertyValue = $this->tester->grabFromCollection('PropertyValue', ['code' => $DTO->code]);
+        $this->tester->assertNotNull($propertyValue);
     }
 
     public function testFailCreatePropertyValue(): void

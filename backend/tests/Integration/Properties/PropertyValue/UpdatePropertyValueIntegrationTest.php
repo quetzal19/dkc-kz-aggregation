@@ -33,5 +33,9 @@ class UpdatePropertyValueIntegrationTest extends AbstractIntegrationTester
         $DTO = PropertyValueHelper::createPropertyValueMessageDTO([]);
 
         $this->tester->assertNotNull($this->propertyValueService->update($DTO));
+        $this->documentManager->flush();
+
+        $propertyValue = $this->tester->grabFromCollection('PropertyValue', ['code' => $DTO->code]);
+        $this->tester->assertNull($propertyValue);
     }
 }

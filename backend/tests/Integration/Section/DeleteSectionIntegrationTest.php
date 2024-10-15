@@ -16,6 +16,11 @@ class DeleteSectionIntegrationTest extends AbstractIntegrationTester
         $DTO = SectionHelper::createSectionMessageDTO();
 
         $this->tester->assertNull($this->sectionService->delete($DTO));
+        $this->documentManager->flush();
+
+        $section = $this->tester->grabFromCollection('Section', ['code' => $DTO->code]);
+
+        $this->tester->assertNull($section);
     }
 
 
@@ -24,6 +29,10 @@ class DeleteSectionIntegrationTest extends AbstractIntegrationTester
         $DTO = SectionHelper::createSectionMessageDTO();
 
         $this->tester->assertNotNull($this->sectionService->delete($DTO));
+
+        $section = $this->tester->grabFromCollection('Section', ['code' => $DTO->code]);
+
+        $this->tester->assertNull($section);
     }
 
 
