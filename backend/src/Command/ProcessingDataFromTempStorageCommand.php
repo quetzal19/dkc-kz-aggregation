@@ -9,6 +9,7 @@ use App\Helper\Locator\Logger\EntityLoggerLocator;
 use App\Features\Priority\{Builder\PriorityFilterBuilder, Service\PriorityService};
 use App\Helper\Locator\Storage\ServiceHandlerStorageLocator;
 use Doctrine\ODM\MongoDB\{DocumentManager, MongoDBException};
+use MongoDB\Driver\Exception\BulkWriteException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\{Attribute\AsCommand,
     Command\Command,
@@ -150,6 +151,8 @@ final class ProcessingDataFromTempStorageCommand extends Command
             } catch (MongoDBException $e) {
                 $this->logger->error($e->getMessage());
                 $io->error("Error flush exception: " . $e->getMessage());
+            } catch (BulkWriteException $e) {
+                $entityLogger->error($e->getMessage());
             }
 
             $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
@@ -178,6 +181,8 @@ final class ProcessingDataFromTempStorageCommand extends Command
             } catch (MongoDBException $e) {
                 $this->logger->error($e->getMessage());
                 $io->error("Error flush exception: " . $e->getMessage());
+            } catch (BulkWriteException $e) {
+                $entityLogger->error($e->getMessage());
             }
 
             $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");

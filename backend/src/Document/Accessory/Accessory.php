@@ -10,7 +10,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
-#[MongoDB\Index(keys: ['externalId' => 'asc'])]
+#[MongoDB\UniqueIndex(keys: ['externalId' => 'asc'])]
+#[MongoDB\UniqueIndex(keys: ['element' => 'asc', 'accessory' => 'asc'])]
 #[MongoDB\Document(repositoryClass: AccessoryRepository::class)]
 class Accessory
 {
