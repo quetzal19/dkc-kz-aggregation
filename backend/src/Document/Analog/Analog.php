@@ -9,7 +9,8 @@ use App\Features\Analog\Repository\AnalogRepository;
 use Doctrine\Common\{Collections\ArrayCollection, Collections\Collection};
 use Doctrine\ODM\MongoDB\{Mapping\Annotations as MongoDB, Types\Type};
 
-#[MongoDB\Index(keys: ['externalId' => 'asc'])]
+#[MongoDB\UniqueIndex(keys: ['externalId' => 'asc'])]
+#[MongoDB\UniqueIndex(keys: ['element' => 'asc', 'analog' => 'asc'])]
 #[MongoDB\Document(repositoryClass: AnalogRepository::class)]
 class Analog
 {
