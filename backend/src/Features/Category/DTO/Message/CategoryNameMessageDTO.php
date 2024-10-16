@@ -3,9 +3,10 @@
 namespace App\Features\Category\DTO\Message;
 
 use App\Helper\Enum\LocaleType;
+use App\Helper\Interface\Message\MessageDTOInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class CategoryNameMessageDTO
+final readonly class CategoryNameMessageDTO implements MessageDTOInterface
 {
     public function __construct(
         #[Assert\Type(type: 'string', message: 'Название должно быть строкой', groups: [

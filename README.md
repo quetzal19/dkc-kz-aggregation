@@ -33,3 +33,11 @@ make bash-php
 ## Локальная копия
 - http://localhost/ - Symfony
 - http://localhost:15672/ - RabbitMQ
+
+## Тестирование
+
+Запустить тесты
+```
+make test
+```
+Тестовая база данных dkc-kz-agg-test, используется для интеграционных тестов

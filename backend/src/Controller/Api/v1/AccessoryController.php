@@ -86,10 +86,10 @@ final class AccessoryController extends AbstractController
     #[Route('/sections/', name: 'api_v1_accessories_sections', methods: [Request::METHOD_GET])]
     public function getSectionsAccessories(
         Request $request,
-        #[MapQueryParameter] string $productCode,
+        #[MapQueryString] AccessoryFilter $filter
     ): JsonResponse {
         $locale = $request->getLocale();
 
-        return $this->json($this->accessoryService->getAccessorySections($productCode, $locale));
+        return $this->json($this->accessoryService->getAccessorySections($filter->productCode, $locale));
     }
 }

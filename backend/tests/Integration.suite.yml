@@ -1,0 +1,15 @@
+actor: IntegrationTester
+suite_namespace: App\Tests\Integration
+modules:
+    enabled:
+        - Symfony:
+              app_path: 'src'
+              environment: 'test'
+        - MongoDb
+        - Asserts
+
+
+    config:
+        MongoDb:
+          dsn: '%MONGODB_URL%/%MONGODB_DB%'
+          cleanup: true
