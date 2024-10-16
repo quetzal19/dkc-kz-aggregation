@@ -2,7 +2,7 @@
 
 namespace App\Helper\Abstract;
 
-use MongoDB\BSON\Regex;
+use Doctrine\ODM\MongoDB\Aggregation\Builder;
 use App\Document\{Product\Product, Section\Section};
 use App\Helper\Enum\LocaleType;
 use Doctrine\Bundle\MongoDBBundle\{ManagerRegistry, Repository\ServiceDocumentRepository};
@@ -69,60 +69,26 @@ abstract class AbstractAnalogAccessoryRepository extends ServiceDocumentReposito
         $builder
             ->unwind('$section');
 
-        $builder
-            ->addFields()
-            ->field('fullPath')
-            ->expression(
-                [
-                    '$split' => [
-                        [
-                            '$cond' => [
-                                ['$ifNull' => ['$section.path', false]],
-                                ['$concat' => ['$section.path', ',', '$section.code']],
-                                '$section.code'
-                            ]
-                        ],
-                        ','
-                    ]
-                ]
-            );
+        $this->addFieldFullPath($builder);
 
-        $builder
-            ->lookup(Section::class)
-            ->let(['fullPath' => '$fullPath'])
-            ->pipeline([
-                [
-                    '$match' => [
-                        '$expr' => [
-                            '$in' => ['$code', '$$fullPath']
-                        ]
-                    ]
-                ],
-                [
-                    '$match' => [
-                        'active' => false,
-                        'locale' => LocaleType::fromString($locale)->value
-                    ]
-                ]
-            ])
-            ->alias('sections');
+        $this->addLookupByFullPathWhereParentSectionsNotActive($builder, $locale, 'sections');
 
         $builder
             ->match()
-            ->field('sections')
-            ->equals([]);
+                ->field('sections')
+                ->equals([]);
 
         $builder->unwind('$' . $property);
 
         $builder
             ->addFields()
-            ->field( $property . 'Code')
-            ->expression('$' . $property . '.code');
+                ->field( $property . 'Code')
+                ->expression('$' . $property . '.code');
 
         $builder
             ->group()
-            ->field('_id')
-            ->expression('$' . $property . 'Code');
+                ->field('_id')
+                ->expression('$' . $property . 'Code');
 
         return $builder->getAggregation()->getIterator()->toArray();
     }
@@ -156,68 +122,35 @@ abstract class AbstractAnalogAccessoryRepository extends ServiceDocumentReposito
                 ->alias('section')
             ->unwind('$section')
             ->match()
-            ->field('section.active')
-            ->equals(true)
-            ->addFields()
-            ->field('fullPath')
-            ->expression([
-                [
-                    '$split' => [
-                        [
-                            '$cond' => [
-                                ['$ifNull' => ['$section.path', false]],
-                                ['$concat' => ['$section.path', ',', '$section.code']],
-                                '$section.code'
-                            ]
-                        ],
-                        ','
-                    ]
-                ]
-            ])
-            ->unwind('$fullPath')
-            ->lookup(Section::class)
-            ->let(['fullPath' => '$fullPath'])
-            ->pipeline([
-                [
-                    '$match' => [
-                        '$expr' => [
-                            '$in' => ['$code', '$$fullPath'],
-                        ],
-                    ]
-                ],
-                [
-                    '$match' => [
-                        'active' => false,
-                        'locale' => LocaleType::fromString($locale)->value
-                    ]
-                ]
-            ])
-            ->alias('parentSection')
+                ->field('section.active')->equals(true);
+
+        $this->addFieldFullPath($builder);
+
+        $this->addLookupByFullPathWhereParentSectionsNotActive($builder, $locale, 'parentSection');
+
+        $builder
             ->match()
-            ->field('parentSection')
-            ->equals([]);
+                ->field('parentSection')
+                ->equals([]);
 
         $builder
             ->addFields()
-            ->field('sectionCode')
-            ->expression('$section.code');
+                ->field('sectionCode')
+                ->expression('$section.code');
 
         $builder
             ->project()
-            ->field('_id')
-            ->expression(false)
-            ->field('sectionCode')
-            ->expression(true)
-            ->field('fullPath')
-            ->expression(true);
+                ->field('_id')->expression(false)
+                ->field('sectionCode')->expression(true)
+                ->field('fullPath')->expression(true);
 
         $builder
             ->group()
-            ->field('_id')
-            ->expression([
-                'sectionCode' => '$sectionCode',
-                'fullPath' => '$fullPath',
-            ]);
+                ->field('_id')
+                ->expression([
+                    'sectionCode' => '$sectionCode',
+                    'fullPath' => '$fullPath',
+                ]);
 
         return $builder->getAggregation()->getIterator()->toArray();
     }
@@ -243,15 +176,59 @@ abstract class AbstractAnalogAccessoryRepository extends ServiceDocumentReposito
 
         $builder
             ->addFields()
-            ->field('filteredName')
-            ->filter('$categoryName', 'name', $builder->expr()->eq('$$name.locale', $locale))
+                ->field('filteredName')
+                ->filter('$categoryName', 'name', $builder->expr()->eq('$$name.locale', $locale))
             ->unwind('$filteredName');
 
         $builder
             ->group()
-            ->field('_id')
-            ->expression('$filteredName.name');
+                ->field('_id')
+                ->expression('$filteredName.name');
 
         return $builder->getAggregation()->getIterator()->toArray();
+    }
+
+    private function addLookupByFullPathWhereParentSectionsNotActive(Builder $builder, string $locale, string $alias): void
+    {
+        $builder
+            ->lookup(Section::class)
+                ->let(['fullPath' => '$fullPath'])
+                ->pipeline([
+                    [
+                        '$match' => [
+                            '$expr' => [
+                                '$in' => ['$code', '$$fullPath'],
+                            ],
+                        ]
+                    ],
+                    [
+                        '$match' => [
+                            'active' => false,
+                            'locale' => LocaleType::fromString($locale)->value
+                        ]
+                    ]
+                ])
+                ->alias($alias);
+    }
+
+    private function addFieldFullPath(Builder $builder): void
+    {
+        $builder
+            ->addFields()
+                ->field('fullPath')
+                ->expression(
+                    [
+                        '$split' => [
+                            [
+                                '$cond' => [
+                                    ['$ifNull' => ['$section.path', false]],
+                                    ['$concat' => ['$section.path', ',', '$section.code']],
+                                    '$section.code'
+                                ]
+                            ],
+                            ','
+                        ]
+                    ]
+                );
     }
 }
