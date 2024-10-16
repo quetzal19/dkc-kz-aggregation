@@ -152,7 +152,7 @@ final readonly class AccessoryActionService implements ActionInterface
     public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AccessoryMessageDTO $dto */
-        $this->accessoryRepository->markAsDeleted($dto->id);
+        $this->accessoryRepository->delete($dto->id);
 
         $this->logger->info("Accessory with id '$dto->id' marked as deleted");
 
