@@ -8,6 +8,8 @@ use App\Helper\Enum\LocaleType;
 class ProductHelper
 {
     public const CODE = 'ABD01L';
+
+    public const UPDATE_CODE = 'ABD01L_1';
     public const EXTERNAL_ID = 'ABD01L_0';
     public const ART_CLASS_ID = 'ABL_0';
     public const UPDATED_SORT = 900;
@@ -16,11 +18,12 @@ class ProductHelper
         string $sectionId,
         bool $active = true,
         int $sort = 0,
+        string $code = self::CODE,
     ): ProductMessageDTO {
         return new ProductMessageDTO(
             LocaleType::getDefaultLocaleName(),
             self::EXTERNAL_ID,
-            self::CODE,
+            $code,
             sectionId: $sectionId,
             active: $active,
             sort: $sort,

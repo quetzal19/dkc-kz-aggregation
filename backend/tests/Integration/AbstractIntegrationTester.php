@@ -2,6 +2,8 @@
 
 namespace App\Tests\Integration;
 
+use App\Features\Accessory\Service\AccessoryActionService;
+use App\Features\Analog\Service\AnalogActionService;
 use App\Features\Product\Service\ProductActionService;
 use App\Features\ProductFeature\Service\ProductFeatureActionService;
 use App\Features\Properties\Property\Service\PropertyActionService;
@@ -9,14 +11,19 @@ use App\Features\Properties\PropertyFeatureMap\Service\PropertyFeatureMapActionS
 use App\Features\Properties\PropertyUnit\Service\PropertyUnitActionService;
 use App\Features\Properties\PropertyValue\Service\PropertyValueActionService;
 use App\Features\Section\Service\SectionActionService;
+use App\Features\SectionFeature\Service\SectionFeatureActionService;
 use App\Helper\Interface\ActionInterface;
-use App\Tests\Helper\Integration\{ProductFeatureHelper,
+use App\Tests\Helper\Integration\{AccessoryHelper,
+    AnalogHelper,
+    CategoryNameHelper,
+    ProductFeatureHelper,
     ProductHelper,
     Properties\PropertyFeatureMapHelper,
     Properties\PropertyHelper,
     Properties\PropertyNameHelper,
     Properties\PropertyUnitHelper,
     Properties\PropertyValueHelper,
+    SectionFeatureHelper,
     SectionHelper
 };
 use App\Tests\Support\IntegrationTester;
@@ -35,6 +42,9 @@ class AbstractIntegrationTester extends Unit
     protected ActionInterface $productFeatureService;
     protected ActionInterface $propertyFeatureMapService;
     protected ActionInterface $propertyUnitService;
+    protected ActionInterface $sectionFeatureService;
+    protected ActionInterface $analogService;
+    protected ActionInterface $accessoryService;
 
     protected function _before(): void
     {
@@ -47,6 +57,85 @@ class AbstractIntegrationTester extends Unit
         $this->productFeatureService = $this->tester->grabService(ProductFeatureActionService::class);
         $this->propertyFeatureMapService = $this->tester->grabService(PropertyFeatureMapActionService::class);
         $this->propertyUnitService = $this->tester->grabService(PropertyUnitActionService::class);
+        $this->sectionFeatureService = $this->tester->grabService(SectionFeatureActionService::class);
+        $this->analogService = $this->tester->grabService(AnalogActionService::class);
+        $this->accessoryService = $this->tester->grabService(AccessoryActionService::class);
+    }
+
+    public function createAccessoryWithSection(
+        string $elementCode = ProductHelper::CODE,
+        string $sectionCode = SectionHelper::CODE
+    ): void {
+        $this->createSection(code: $sectionCode);
+        $this->createProduct($elementCode);
+
+        $categories = CategoryNameHelper::initCategoryNameByLocales();
+
+        $DTO = AccessoryHelper::createAccessoryMessageDTO(
+            productElementCode: $elementCode,
+            categories: $categories,
+            sectionCode: $sectionCode
+        );
+
+        $this->tester->assertNull($this->accessoryService->create($DTO));
+        $this->documentManager->flush();
+    }
+
+    public function createAccessoryWithProducts(
+        string $elementCode = ProductHelper::CODE,
+        string $accessoryElementCode = ProductHelper::UPDATE_CODE,
+    ): void {
+        $this->createProduct($elementCode);
+        $this->createProduct($accessoryElementCode);
+
+        $categories = CategoryNameHelper::initCategoryNameByLocales();
+
+        $DTO = AccessoryHelper::createAccessoryMessageDTO(
+            productElementCode: $elementCode,
+            categories: $categories,
+            accessoryCode: $accessoryElementCode
+        );
+
+        $this->tester->assertNull($this->accessoryService->create($DTO));
+        $this->documentManager->flush();
+    }
+
+    public function createAnalogWithSection(
+        string $elementCode = ProductHelper::CODE,
+        string $sectionCode = SectionHelper::CODE
+    ): void {
+        $this->createSection(code: $sectionCode);
+        $this->createProduct($elementCode);
+
+        $categories = CategoryNameHelper::initCategoryNameByLocales();
+
+        $DTO = AnalogHelper::createAnalogMessageDTO(
+            productElementCode: $elementCode,
+            categories: $categories,
+            sectionCode: $sectionCode
+        );
+
+        $this->tester->assertNull($this->analogService->create($DTO));
+        $this->documentManager->flush();
+    }
+
+    public function createAnalogWithProducts(
+        string $elementCode = ProductHelper::CODE,
+        string $analogElementCode = ProductHelper::UPDATE_CODE,
+    ): void {
+        $this->createProduct($elementCode);
+        $this->createProduct($analogElementCode);
+
+        $categories = CategoryNameHelper::initCategoryNameByLocales();
+
+        $DTO = AnalogHelper::createAnalogMessageDTO(
+            productElementCode: $elementCode,
+            categories: $categories,
+            analogElementCode: $analogElementCode
+        );
+
+        $this->tester->assertNull($this->analogService->create($DTO));
+        $this->documentManager->flush();
     }
 
     public function createPropertyFeatureMap(): void
@@ -105,6 +194,20 @@ class AbstractIntegrationTester extends Unit
         $this->documentManager->flush();
     }
 
+    protected function createSectionFeature(string $code = SectionHelper::CODE): void
+    {
+        $this->createSection(code: $code);
+        $this->createProperty();
+
+        $DTO = SectionFeatureHelper::createSectionFeatureMessageDTO(
+            sectionCode: $code,
+            featureCode: PropertyHelper::CODE
+        );
+
+        $this->tester->assertNull($this->sectionFeatureService->create($DTO));
+        $this->documentManager->flush();
+    }
+
     protected function createProperty(string $code = PropertyHelper::CODE): void
     {
         $propertyNames = PropertyNameHelper::initPropertyNameByLocales();
@@ -132,13 +235,13 @@ class AbstractIntegrationTester extends Unit
         }
     }
 
-    protected function createProduct(): void
+    protected function createProduct(string $code = ProductHelper::CODE): void
     {
         $this->createSection();
 
-        $DTO = ProductHelper::createProductMessageDTO(SectionHelper::EXTERNAL_ID);
+        $DTO = ProductHelper::createProductMessageDTO(SectionHelper::EXTERNAL_ID, code: $code);
 
-        $product = $this->tester->grabFromCollection('Product', ['code' => ProductHelper::CODE]);
+        $product = $this->tester->grabFromCollection('Product', ['code' => $code]);
         if (!$product) {
             $this->tester->assertNull($this->productService->create($DTO));
             $this->documentManager->flush();
@@ -163,13 +266,5 @@ class AbstractIntegrationTester extends Unit
             $this->tester->assertNull($this->sectionService->create($DTO));
             $this->documentManager->flush();
         }
-    }
-
-    protected function print($obj)
-    {
-        echo "\n\n";
-        var_export($obj);
-        echo "\n\n";
-        exit();
     }
 }

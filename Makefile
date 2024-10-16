@@ -47,3 +47,6 @@ cron-up: ## Запустить контейнер крона (не для лок
 
 bash-rabbit: ## Зайти в bash контейнера с RabbitMq
 	docker compose -f docker/docker-compose.$(ENV).yml exec rabbit bash
+
+test: ## Запустить тесты
+	docker compose -f docker/docker-compose.$(ENV).yml exec php-fpm php ./vendor/bin/codecept run

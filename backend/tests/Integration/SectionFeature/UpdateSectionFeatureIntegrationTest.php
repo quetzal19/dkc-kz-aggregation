@@ -6,22 +6,22 @@ use App\Tests\Helper\Integration\{Properties\PropertyHelper, SectionFeatureHelpe
 use App\Tests\Integration\AbstractIntegrationTester;
 use MongoDB\Model\{BSONArray, BSONDocument};
 
-class CreateSectionFeatureIntegrationTest extends AbstractIntegrationTester
+class UpdateSectionFeatureIntegrationTest extends AbstractIntegrationTester
 {
-    public function testSuccessCreateSectionFeature(): void
+
+    public function testSuccessUpdateSortSectionFeature(): void
     {
-        $this->createSection();
-        $this->createProperty();
+        $this->createSectionFeature(SectionHelper::PARENT_CODE);
 
         $DTO = SectionFeatureHelper::createSectionFeatureMessageDTO(
-            sectionCode: SectionHelper::CODE,
-            featureCode: PropertyHelper::CODE
+            sectionCode: SectionHelper::PARENT_CODE,
+            featureCode: PropertyHelper::CODE,
+            sort: SectionFeatureHelper::UPDATED_SORT
         );
 
-        $this->tester->assertNull($this->sectionFeatureService->create($DTO));
+        $this->tester->assertNull($this->sectionFeatureService->update($DTO));
         $this->documentManager->flush();
 
-        // Test get from database section feature
         $property = $this->tester->grabFromCollection('Property', ['code' => PropertyHelper::CODE]);
 
         $this->tester->assertNotNull($property);
@@ -44,29 +44,19 @@ class CreateSectionFeatureIntegrationTest extends AbstractIntegrationTester
         $this->tester->assertArrayHasKey('sectionCode', $sectionCode);
         $this->tester->assertArrayHasKey('sort', $sectionCode);
 
-        $this->tester->assertEquals(SectionHelper::CODE, $sectionCode['sectionCode']);
-        $this->tester->assertEquals(SectionFeatureHelper::SORT, $sectionCode['sort']);
+        $this->tester->assertEquals(SectionHelper::PARENT_CODE, $sectionCode['sectionCode']);
+        $this->tester->assertEquals(SectionFeatureHelper::UPDATED_SORT, $sectionCode['sort']);
     }
 
-    public function testFailureCreateSectionFeature(): void
+    public function testFailureUpdateSortSectionFeature(): void
     {
-        $this->createProperty();
-
         $DTO = SectionFeatureHelper::createSectionFeatureMessageDTO(
             sectionCode: SectionHelper::CODE,
-            featureCode: PropertyHelper::CODE
+            featureCode: PropertyHelper::CODE,
+            sort: SectionFeatureHelper::UPDATED_SORT
         );
 
-        $this->tester->assertNotNull($this->sectionFeatureService->create($DTO));
+        $this->tester->assertNotNull($this->sectionFeatureService->update($DTO));
         $this->documentManager->flush();
-
-        $property = $this->tester->grabFromCollection('Property', ['code' => PropertyHelper::CODE]);
-
-        $this->tester->assertNotNull($property);
-        $this->tester->assertInstanceOf(BSONDocument::class, $property);
-
-        $property = $property->getArrayCopy();
-
-        $this->tester->assertArrayNotHasKey('sectionCodes', $property);
     }
 }
