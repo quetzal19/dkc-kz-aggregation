@@ -149,7 +149,7 @@ final readonly class AnalogActionService implements ActionInterface
     public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AnalogMessageDTO $dto */
-        $this->analogRepository->markAsDeleted($dto->id);
+        $this->analogRepository->delete($dto->id);
 
         $this->logger->info("Analog with id '$dto->id' marked as deleted");
 
