@@ -63,6 +63,18 @@ class PropertyValue
         return $this->names;
     }
 
+    public function getNameByLocale(string $locale): ?PropertyName
+    {
+        $name = $this->names
+            ->filter(fn(PropertyName $propertyName) => $propertyName->getLocale() == $locale)
+            ->first();
+        if (!$name) {
+            return null;
+        }
+
+        return $name;
+    }
+
     public function addName(PropertyName $propertyName): PropertyValue
     {
         $this->names->add($propertyName);

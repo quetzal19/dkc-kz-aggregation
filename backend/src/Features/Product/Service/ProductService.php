@@ -44,9 +44,9 @@ final readonly class ProductService
             LocaleType::fromString($locale)->value
         );
 
-        $sectionCodes = array_map(fn(Section $section) => $section->getCode(), [$section, ...$childrenSections]);
+        $sectionId = array_map(fn(Section $section) => $section->getId(), [$section, ...$childrenSections]);
 
-        $productCodes = $this->productRepository->findActiveBySectionCodes($sectionCodes, $filters, $locale);
+        $productCodes = $this->productRepository->findActiveBySectionCodes($sectionId, $filters, $locale);
         $count = count($productCodes);
 
         $productCodes = PaginationDTO::sliceArray(data: $productCodes, page: $filter->page, limit: $filter->limit);
