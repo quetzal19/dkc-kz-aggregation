@@ -3,10 +3,12 @@
 namespace App\Features\Properties\Property\Service;
 
 use App\Document\Properties\Property;
+use App\Document\Properties\PropertyValue;
 use App\Document\Section\Section;
 use App\Features\Product\DTO\Property\ProductPropertyDTO;
 use App\Features\Product\Repository\ProductRepository;
 use App\Features\Properties\Property\DTO\Repository\PropertyFilterDTO;
+use App\Features\Properties\PropertyValue\Repository\PropertyValueRepository;
 use App\Features\Properties\Property\DTO\Http\Response\{PropertyFilterItemResponseDTO,
     PropertyFilterItemValueResponseDTO,
     PropertyFilterResponseDTO
@@ -16,6 +18,7 @@ use App\Features\Properties\Property\Repository\PropertyRepository;
 use App\Features\Section\Repository\SectionRepository;
 use App\Helper\{Enum\LocaleType, Exception\ApiException};
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 final readonly class PropertyService
@@ -23,6 +26,7 @@ final readonly class PropertyService
     public function __construct(
         private SectionRepository $sectionRepository,
         private PropertyRepository $propertyRepository,
+        private PropertyValueRepository $propertyValueRepository,
         private ProductRepository $productRepository,
         private DenormalizerInterface $denormalizer,
     ) {
@@ -50,19 +54,20 @@ final readonly class PropertyService
         }
 
         $childrenSections = $this->sectionRepository->findChildrenByFullPath($section->getFullPath(), $localeInt);
-        $sectionCodes = array_map(fn(Section $section) => $section->getCode(), [$section, ...$childrenSections]);
+
+        $allSection = [$section, ...$childrenSections];
+
+        $sectionCodes = [];
+        $sectionIds = [];
+        foreach ($allSection as $section) {
+            $sectionCodes[] = $section->getCode();
+            $sectionIds[] = $section->getId();
+        }
 
         /** @var ProductPropertyDTO[] $productsProperties */
         $productsProperties = [];
         if (!$filtersIsEmpty) {
-            $groupedProducts = $this->productRepository->getProductFilters(
-                filters: $filters,
-                sectionCodes: $sectionCodes,
-            );
-
-            foreach ($groupedProducts as $groupedProduct) {
-                $productsProperties[] = $this->denormalizer->denormalize($groupedProduct['_id'], ProductPropertyDTO::class);
-            }
+            $productsProperties = $this->getProductProperties($filters, $sectionIds);
         }
 
         $properties = $this->propertyRepository->findBySectionCodes($sectionCodes);
@@ -71,14 +76,19 @@ final readonly class PropertyService
         $propertiesCodes = [];
         foreach ($properties as $property) {
             $indexedPropertiesByCode[$property->getCode()] = $property;
-            $propertiesCodes[] = $property->getCode();
+            if (!in_array($property->getCode(), $propertiesCodes)) {
+                $propertiesCodes[] = $property->getCode();
+            }
         }
 
         $foundedProperties = $this->productRepository->getSortedProperties(
             propertyCodes: $propertiesCodes,
-            sectionCodes: $sectionCodes,
-            locale: $locale
+            sectionIds: $sectionIds,
         );
+
+        $foundedProperties = array_column($foundedProperties, '_id');
+
+        $propertyValueNames = $this->getPropertyValueNamesByFoundedProperties($foundedProperties, $locale);
 
         $filters = [];
         $propertiesFilter = [];
@@ -86,7 +96,7 @@ final readonly class PropertyService
         $totalCount = 0;
         foreach ($foundedProperties as $foundedProperty) {
             $propertyFilterDTO = $this->denormalizer->denormalize(
-                $foundedProperty['_id'],
+                $foundedProperty,
                 PropertyFilterDTO::class,
             );
 
@@ -98,7 +108,7 @@ final readonly class PropertyService
             $property = $indexedPropertiesByCode[$propertyFilterDTO->featureCode];
 
             if (array_key_exists($property->getCode(), $propertiesFilter)) {
-                $filter =  $propertiesFilter[$property->getCode()];
+                $filter = $propertiesFilter[$property->getCode()];
             } else {
                 $filter = new PropertyFilterItemResponseDTO(
                     code: $property->getCode(),
@@ -109,22 +119,26 @@ final readonly class PropertyService
                 $propertiesFilter[$property->getCode()] = $filter;
             }
 
-            $unit = $property->getUnitNameByCodeAndLocale($propertyFilterDTO->unitCode, $localeInt);
-
-            $value = new PropertyFilterItemValueResponseDTO(
-                code: $propertyFilterDTO->valueCode,
-                name: $propertyFilterDTO->valueName . ($unit ? " $unit" : ''),
-            );
-
-            if(!$filtersIsEmpty) {
+            if (!$filtersIsEmpty) {
                 $countProducts = 0;
                 foreach ($productsProperties as $productsProperty) {
-                    $intersectedProducts = array_intersect($productsProperty->products, $propertyFilterDTO->productCodes);
+                    $intersectedProducts = array_intersect(
+                        $productsProperty->products,
+                        $propertyFilterDTO->productCodes
+                    );
                     $countProducts += count($intersectedProducts);
                 }
             } else {
                 $countProducts = count($propertyFilterDTO->productCodes);
             }
+
+            if (array_key_exists($propertyFilterDTO->valueCode, $propertyValueNames)) {
+                $valueName = $propertyValueNames[$propertyFilterDTO->valueCode];
+            } else {
+                continue;
+            }
+
+            $value = $this->getPropertyValueFilterDTO($propertyFilterDTO, $valueName, $property, $localeInt);
 
             $value
                 ->setCount($countProducts)
@@ -139,5 +153,66 @@ final readonly class PropertyService
             filters: $filters,
             count: $totalCount
         );
+    }
+
+    private function getPropertyValueFilterDTO(
+        PropertyFilterDTO $propertyFilterDTO,
+        string $valueName,
+        Property $property,
+        int $localeInt
+    ): PropertyFilterItemValueResponseDTO {
+        $unit = $property->getUnitNameByCodeAndLocale($propertyFilterDTO->unitCode, $localeInt);
+
+        return new PropertyFilterItemValueResponseDTO(
+            code: $propertyFilterDTO->valueCode,
+            name: $valueName . ($unit ? " $unit" : ''),
+        );
+    }
+
+    private function getPropertyValueNamesByFoundedProperties(array $foundedProperties, string $locale): array
+    {
+        $valuesCodes = array_column($foundedProperties, 'valueCode');
+
+        /** @var PropertyValue[] $values */
+        $values = $this->propertyValueRepository->createAggregationBuilder()
+            ->hydrate(PropertyValue::class)
+            ->match()
+                ->addOr([
+                    'code' => ['$in' => $valuesCodes],
+                ])
+                ->addOr([
+                    '_id' => ['$in' => $valuesCodes],
+                ])
+            ->getAggregation()
+            ->getIterator();
+
+        $indexedValues = [];
+        foreach ($values as $value) {
+            $indexedValues[$value->getCodeOrId()] = $value->getNameByLocale($locale)?->getName() ?? '';
+        }
+
+        return $indexedValues;
+    }
+
+    /**
+     * @return ProductPropertyDTO[]
+     * @throws ExceptionInterface
+     */
+    private function getProductProperties(array $filters, array $sectionIds): array
+    {
+        $groupedProducts = $this->productRepository->getProductFilters(
+            filters: $filters,
+            sectionIds: $sectionIds,
+        );
+
+        $productsProperties = [];
+        foreach ($groupedProducts as $groupedProduct) {
+            $productsProperties[] = $this->denormalizer->denormalize(
+                $groupedProduct['_id'],
+                ProductPropertyDTO::class
+            );
+        }
+
+        return $productsProperties;
     }
 }

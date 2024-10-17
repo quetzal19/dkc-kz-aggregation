@@ -155,6 +155,7 @@ final readonly class ProductFeatureActionService implements ActionInterface
 
         if (!$this->documentManager->contains($propertyValue)) {
             $this->documentManager->persist($propertyValue);
+            $this->documentManager->flush();
         }
 
         $product->setProperties(

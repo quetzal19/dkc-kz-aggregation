@@ -4,7 +4,7 @@ namespace App\Features\Product\Repository;
 
 use App\Helper\Enum\LocaleType;
 use Doctrine\ODM\MongoDB\Aggregation\Builder;
-use App\Document\{Product\Product, Properties\PropertyValue, Section\Section};
+use App\Document\{Product\Product};
 use Doctrine\Bundle\MongoDBBundle\{ManagerRegistry, Repository\ServiceDocumentRepository};
 
 class ProductRepository extends ServiceDocumentRepository
@@ -14,26 +14,15 @@ class ProductRepository extends ServiceDocumentRepository
         parent::__construct($registry, Product::class);
     }
 
-    public function findActiveBySectionCodes(array $sectionCodes, array $filters, string $locale): array
+    public function findActiveBySectionCodes(array $sectionId, array $filters, string $locale): array
     {
         $builder = $this->createAggregationBuilder();
 
         $builder
-            ->lookup(Section::class)
-            ->localField('section.$id')
-            ->foreignField('_id')
-            ->alias('section');
-
-        $builder->unwind('$section');
-
-        $builder
             ->match()
-            ->field('section.code')
-            ->in($sectionCodes)
-            ->field('active')
-            ->equals(true)
-            ->field('locale')
-            ->equals(LocaleType::fromString($locale)->value);
+                ->field('section.$id')->in($sectionId)
+                ->field('active')->equals(true)
+                ->field('locale')->equals(LocaleType::fromString($locale)->value);
 
 
         if (!empty($filters)) {
@@ -50,162 +39,109 @@ class ProductRepository extends ServiceDocumentRepository
 
         $builder
             ->project()
-            ->excludeFields(['_id'])
-            ->includeFields(['code'])
+                ->excludeFields(['_id'])
+                ->includeFields(['code'])
             ->group()
-            ->field('_id')
-            ->expression('$code');
+                ->field('_id')->expression('$code');
 
         return $builder->getAggregation()->getIterator()->toArray();
     }
 
     public function buildBasePipeline(
         array $propertyCodes,
-        array $sectionCodes,
+        array $sectionIds,
     ): Builder {
         $builder = $this->createAggregationBuilder();
 
         $builder
-            ->lookup(Section::class)
-            ->localField('section.$id')
-            ->foreignField('_id')
-            ->alias('section');
-
-        $builder->unwind('$section');
-
-        $builder
             ->match()
-            ->field('section.code')
-            ->in($sectionCodes);
+                ->field('section.$id')
+                    ->in($sectionIds)
+                ->field('property')
+                    ->notEqual([]);
 
         $builder
             ->project()
-            ->field('productCode')
-            ->expression('$code')
-            ->field('property')
-            ->field('properties')
-            ->filter(
-                '$property',
-                'property',
-                $builder->expr()->regexMatch('$$property', implode('|', $propertyCodes))
-            );
+                ->field('productCode')
+                    ->expression('$code')
+                ->field('property')
+                    ->expression('$property');
 
         $builder
+            ->unwind('$property')
             ->addFields()
-            ->field('size')
-            ->size('$properties');
+                ->field('propertyArray')
+                    ->expression([
+                        '$split' => ['$property', ':']
+                    ])
+            ->addFields()
+                ->field('featureCode')
+                    ->expression([
+                        '$arrayElemAt' => ['$propertyArray', 0]
+                    ])
+                ->field('valueCode')
+                    ->expression([
+                        '$arrayElemAt' => ['$propertyArray', 1]
+                    ])
+                ->field('unitCode')
+                    ->expression([
+                        '$arrayElemAt' => ['$propertyArray', 2]
+                    ]);
 
         $builder
             ->match()
-            ->field('size')
-            ->gt(0);
-
-        $builder
-            ->unwind('$properties')
-            ->addFields()
-            ->field('propertyArray')
-            ->expression([
-                '$split' => ['$properties', ':']
-            ])
-            ->addFields()
-            ->field('featureCode')
-            ->expression([
-                '$arrayElemAt' => ['$propertyArray', 0]
-            ])
-            ->field('valueCode')
-            ->expression([
-                '$arrayElemAt' => ['$propertyArray', 1]
-            ])
-            ->field('unitCode')
-            ->expression([
-                '$arrayElemAt' => ['$propertyArray', 2]
-            ]);
-
-        $builder
+                ->field('valueCode')->notEqual('')
+                ->field('featureCode')->in($propertyCodes)
             ->project()
-            ->includeFields(['productCode', 'featureCode', 'valueCode', 'unitCode'])
-            ->field('length')
-            ->strLenCP('$valueCode');
-
-        $builder
-            ->match()
-            ->field('length')
-            ->gt(0);
+                ->includeFields(['productCode', 'featureCode', 'valueCode', 'unitCode']);
 
         return $builder;
     }
 
     public function getSortedProperties(
         array $propertyCodes,
-        array $sectionCodes,
-        string $locale
-    ): \Iterator {
-        $builder = $this->buildBasePipeline($propertyCodes, $sectionCodes);
-
-        $builder
-            ->lookup(PropertyValue::class)
-            ->let(['valueCode' => '$valueCode'])
-            ->pipeline([
-                [
-                    '$match' => [
-                        '$expr' => [
-                            '$or' => [
-                                ['$eq' => ['$_id', '$$valueCode']],
-                                ['$eq' => ['$code', '$$valueCode']]
-                            ]
-                        ]
-                    ]
-                ]
-            ])
-            ->alias('propertyValue');
-
-        $builder
-            ->unwind('$propertyValue')
-            ->addFields()
-            ->field('filteredName')
-            ->filter('$propertyValue.names', 'name', $builder->expr()->eq('$$name.locale', $locale))
-            ->unwind('$filteredName');
+        array $sectionIds,
+    ): array {
+        $builder = $this->buildBasePipeline($propertyCodes, $sectionIds);
 
         $builder
             ->group()
-            ->field('_id')
-            ->expression([
-                'featureCode' => '$featureCode',
-                'valueName' => '$filteredName.name',
-                'valueCode' => '$valueCode',
-                'unitCode' => '$unitCode',
-            ])
-            ->field('productCodes')
-            ->push('$productCode');
-
-        $builder
-            ->addFields()
-            ->field('index')
-            ->expression([
-                '$indexOfArray' => [$propertyCodes, '$_id.featureCode'],
-            ]);
-
-        $builder->sort('index', 1);
+                ->field('_id')
+                    ->expression([
+                        'featureCode' => '$featureCode',
+                        'valueCode' => '$valueCode',
+                        'unitCode' => '$unitCode',
+                    ])
+                ->field('productCodes')->push('$productCode');
 
         $builder
             ->project()
-            ->field('_id')
-            ->expression([
-                'featureCode' => '$_id.featureCode',
-                'valueCode' => '$_id.valueCode',
-                'valueName' => '$_id.valueName',
-                'unitCode' => '$_id.unitCode',
-                'productCodes' => '$productCodes',
-            ]);
+                ->field('_id')
+                    ->expression([
+                        'featureCode' => '$_id.featureCode',
+                        'valueCode' => '$_id.valueCode',
+                        'unitCode' => '$_id.unitCode',
+                        'productCodes' => '$productCodes',
+                    ]);
 
-        return $builder->getAggregation()->getIterator();
+
+        $builder
+            ->addFields()
+                ->field('index')
+                    ->expression([
+                        '$indexOfArray' => [$propertyCodes, '$_id.featureCode'],
+                    ]);
+
+        $builder->sort('index', 1);
+
+        return $builder->getAggregation()->getIterator()->toArray();
     }
 
     public function getProductFilters(
         array $filters,
-        array $sectionCodes,
+        array $sectionIds,
     ): \Iterator {
-        $builder = $this->buildBasePipeline(array_keys($filters), $sectionCodes);
+        $builder = $this->buildBasePipeline(array_keys($filters), $sectionIds);
 
         $builder
             ->group()
