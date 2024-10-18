@@ -153,6 +153,8 @@ final class ProcessingDataFromTempStorageCommand extends Command
                 $io->error("Error flush exception: " . $e->getMessage());
             } catch (BulkWriteException $e) {
                 $entityLogger->error($e->getMessage());
+
+                return Command::FAILURE;
             }
 
             $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
@@ -181,8 +183,6 @@ final class ProcessingDataFromTempStorageCommand extends Command
             } catch (MongoDBException $e) {
                 $this->logger->error($e->getMessage());
                 $io->error("Error flush exception: " . $e->getMessage());
-            } catch (BulkWriteException $e) {
-                $entityLogger->error($e->getMessage());
             }
 
             $io->writeln(" <info>memory usage: " . $this->getCurrentMemoryUsage() . "</info>");
