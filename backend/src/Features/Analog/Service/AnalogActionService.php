@@ -60,6 +60,14 @@ final readonly class AnalogActionService implements ActionInterface
             );
         }
 
+        $analogDocument = $this->analogRepository->findOneBy(['element' => $element, 'analog' => $analog]);
+        if ($analogDocument) {
+            return new ErrorMessage(
+                ErrorType::DUPLICATE,
+                "On create analog, such a combination of element '$dto->elementCode' and analog '$dto->analogCode' already exists"
+            );
+        }
+
         $collectionCategory = new ArrayCollection();
         foreach ($dto->categoryName as $categoryName) {
             $categoryNameDocument = $this->categoryNameMapper->mapFromMessageDTO($categoryName);
