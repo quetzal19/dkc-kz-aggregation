@@ -23,6 +23,15 @@ abstract class AbstractAnalogAccessoryRepository extends ServiceDocumentReposito
             ->execute();
     }
 
+    public function delete(string $id): void
+    {
+        $this->createQueryBuilder()
+            ->remove()
+                ->field('externalId')->equals($id)
+            ->getQuery()
+            ->execute();
+    }
+
     public function markAsDeleted(string $id): void
     {
         $this->createQueryBuilder()
