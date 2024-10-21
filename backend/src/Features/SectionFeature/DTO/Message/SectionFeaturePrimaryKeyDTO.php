@@ -2,9 +2,10 @@
 
 namespace App\Features\SectionFeature\DTO\Message;
 
+use App\Helper\Interface\Message\MessageDTOInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class SectionFeaturePrimaryKeyDTO
+final readonly class SectionFeaturePrimaryKeyDTO implements MessageDTOInterface
 {
     public function __construct(
         #[Assert\NotBlank(message: 'Код раздела не может быть пустым', groups: ['create', 'update', 'delete'])]

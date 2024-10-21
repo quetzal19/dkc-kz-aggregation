@@ -15,7 +15,7 @@ final readonly class SectionFeatureMessageDTO implements MessageDTOInterface
         #[Assert\Valid(groups: ['create', 'update', 'delete'])]
         public mixed $primaryKeys,
 
-        #[Assert\Type(type: 'integer', message: 'Сортировка должна быть строкой', groups: ['create', 'update', 'delete'])]
+        #[Assert\Type(type: 'integer', message: 'Сортировка должна быть целым числом', groups: ['create', 'update', 'delete'])]
         #[Assert\PositiveOrZero(message: 'Сортировка должна быть положительной', groups: ['create', 'update', 'delete'])]
         #[Assert\LessThan(value: IntegerHelper::MAX_SIZE_INTEGER, message: 'Сортировка должна быть меньше 2147483647', groups: [
             'create',

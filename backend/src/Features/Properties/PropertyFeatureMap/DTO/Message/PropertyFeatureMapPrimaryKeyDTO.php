@@ -2,9 +2,10 @@
 
 namespace App\Features\Properties\PropertyFeatureMap\DTO\Message;
 
+use App\Helper\Interface\Message\MessageDTOInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-final readonly class PropertyFeatureMapPrimaryKeyDTO
+final readonly class PropertyFeatureMapPrimaryKeyDTO implements MessageDTOInterface
 {
     public function __construct(
         #[Assert\NotBlank(message: 'Код продукта не может быть пустым', groups: ['create', 'update', 'delete'])]
