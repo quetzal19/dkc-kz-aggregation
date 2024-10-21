@@ -60,6 +60,14 @@ final readonly class AccessoryActionService implements ActionInterface
             );
         }
 
+        $accessoryDocument = $this->accessoryRepository->findOneBy(['element' => $element, 'accessory' => $accessory]);
+        if ($accessoryDocument) {
+            return new ErrorMessage(
+                ErrorType::DUPLICATE,
+                "On create accessory, such a combination of element '$dto->elementCode' and accessory '$dto->accessoryCode' already exists"
+            );
+        }
+
         $collectionCategory = new ArrayCollection();
         foreach ($dto->categoryName as $categoryName) {
             $categoryNameDocument = $this->categoryNameMapper->mapFromMessageDTO($categoryName);
@@ -152,7 +160,7 @@ final readonly class AccessoryActionService implements ActionInterface
     public function delete(MessageDTOInterface $dto): ?AbstractErrorMessage
     {
         /** @var AccessoryMessageDTO $dto */
-        $this->accessoryRepository->markAsDeleted($dto->id);
+        $this->accessoryRepository->delete($dto->id);
 
         $this->logger->info("Accessory with id '$dto->id' marked as deleted");
 
